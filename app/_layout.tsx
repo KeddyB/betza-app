@@ -1,10 +1,12 @@
+import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
@@ -12,7 +14,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useTheme(); // Use the new useTheme hook
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,29 +52,33 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        {isAuthenticated ? (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen
-              name="auth"
-              options={{ headerShown: false }}
-              redirect={false}
-              initialRouteName="get-started"
-            />
-          </>
-        )}
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ToastProvider>
+      <CartProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            {isAuthenticated ? (
+              <>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </>
+            ) : (
+              <>
+                <Stack.Screen
+                  name="auth"
+                  options={{ headerShown: false }}
+                  redirect={false}
+                  initialRouteName="get-started"
+                />
+              </>
+            )}
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </CartProvider>
+    </ToastProvider>
   );
 }
