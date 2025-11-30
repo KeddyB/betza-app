@@ -1,22 +1,24 @@
 import { CartProvider } from './context/CartContext';
 import { ToastProvider } from './context/ToastContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
+import { useTheme } from '@/hooks/use-color-scheme';
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  initialRouteName: '(tabs)',
 };
 
-export default function RootLayout() {
-  const { colorScheme } = useTheme(); // Use the new useTheme hook
+function RootLayoutNav() {
+  const { colorScheme } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const segments = useSegments();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -33,12 +35,10 @@ export default function RootLayout() {
 
     checkAuth();
 
-    // Listen to auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session?.user);
     });
 
-    // Setup deep linking for OAuth
     const unsubscribeDeepLink = setupDeepLinking();
 
     return () => {
@@ -47,37 +47,37 @@ export default function RootLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === 'auth';
+
+    if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoading, isAuthenticated, segments]);
+
   if (isLoading) {
-    return null;
+    return null; 
   }
 
   return (
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
     <ToastProvider>
       <CartProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            {isAuthenticated ? (
-              <>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-              </>
-            ) : (
-              <>
-                <Stack.Screen
-                  name="auth"
-                  options={{ headerShown: false }}
-                  redirect={false}
-                  initialRouteName="get-started"
-                />
-              </>
-            )}
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+        <RootLayoutNav />
+        <StatusBar style="auto" />
       </CartProvider>
     </ToastProvider>
   );

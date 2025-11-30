@@ -98,11 +98,11 @@ function ProductDetailScreen() {
     <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         {/* Custom Header */}
         <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+            <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
                 <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
             </TouchableOpacity>
             <Text style={[styles.headerTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Product Details</Text>
-            <TouchableOpacity onPress={() => router.push('/cart')} style={styles.iconButton}>
+            <TouchableOpacity onPress={() => router.push('/cart')} style={[styles.iconButton, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
                  <Ionicons name="bag-outline" size={24} color={Colors[colorScheme ?? 'light'].text} />
             </TouchableOpacity>
         </View>
@@ -112,7 +112,7 @@ function ProductDetailScreen() {
              <Image source={{ uri: product.image_url }} style={styles.image} resizeMode="contain" />
              {/* 360 Indicator - Cosmetic */}
              <View style={styles.rotateIndicator}>
-                 <Ionicons name="code-working" size={20} color="#FF6B6B" />
+                 <Ionicons name="code-working" size={20} color={Colors.light.primary} />
              </View>
         </View>
 
@@ -121,7 +121,7 @@ function ProductDetailScreen() {
               <Text style={[styles.name, { color: Colors[colorScheme ?? 'light'].text }]}>{product.name}</Text>
               <View>
                   <Text style={[styles.priceLabel, { color: Colors[colorScheme ?? 'light'].text + '80' }]}>Price</Text>
-                  <Text style={[styles.price, { color: Colors[colorScheme ?? 'light'].text }]}>${product.price.toFixed(2)}</Text>
+                  <Text style={[styles.price, { color: Colors[colorScheme ?? 'light'].text }]}>₦{product.price.toFixed(2)}</Text>
               </View>
           </View>
 
@@ -132,10 +132,10 @@ function ProductDetailScreen() {
 
           {/* Tabs */}
           <View style={styles.tabContainer}>
-              <Pressable onPress={() => setActiveTab('Description')} style={[styles.tab, activeTab === 'Description' && styles.activeTab]}>
+              <Pressable onPress={() => setActiveTab('Description')} style={[styles.tab, activeTab === 'Description' && styles.activeTab, activeTab === 'Description' && { backgroundColor: Colors.light.primary }]}>
                   <Text style={[styles.tabText, activeTab === 'Description' ? styles.activeTabText : { color: Colors[colorScheme ?? 'light'].text }]}>Description</Text>
               </Pressable>
-              <Pressable onPress={() => setActiveTab('Review')} style={[styles.tab, activeTab === 'Review' && styles.activeTab]}>
+              <Pressable onPress={() => setActiveTab('Review')} style={[styles.tab, activeTab === 'Review' && styles.activeTab, activeTab === 'Review' && { backgroundColor: Colors.light.primary }]}>
                   <Text style={[styles.tabText, activeTab === 'Review' ? styles.activeTabText : { color: Colors[colorScheme ?? 'light'].text }]}>Review</Text>
               </Pressable>
           </View>
@@ -149,7 +149,7 @@ function ProductDetailScreen() {
           <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Color</Text>
           <View style={styles.variantContainer}>
               {['#D1D5DB', '#FECACA', '#BFDBFE', '#A7F3D0'].map((color, index) => (
-                  <View key={index} style={[styles.variantCircle, { backgroundColor: color, borderColor: index === 1 ? '#FF6B6B' : 'transparent', borderWidth: index === 1 ? 2 : 0 }]} />
+                  <View key={index} style={[styles.variantCircle, { backgroundColor: color, borderColor: index === 1 ? Colors.light.primary : 'transparent', borderWidth: index === 1 ? 2 : 0 }]} />
               ))}
           </View>
 
@@ -158,18 +158,18 @@ function ProductDetailScreen() {
 
       {/* Bottom Action Bar */}
       <View style={[styles.bottomBar, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-          <View style={[styles.quantitySelector, { backgroundColor: '#F3F4F6' }]}>
+          <View style={[styles.quantitySelector, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
                <TouchableOpacity onPress={decrementQuantity} style={styles.qtyBtn}>
-                   <Ionicons name="remove" size={20} color="#FF6B6B" />
+                   <Ionicons name="remove" size={20} color={Colors.light.primary} />
                </TouchableOpacity>
-               <Text style={styles.qtyText}>{quantity} kg</Text>
+               <Text style={[styles.qtyText, { color: Colors[colorScheme ?? 'light'].text }]}>{quantity} kg</Text>
                <TouchableOpacity onPress={incrementQuantity} style={styles.qtyBtn}>
-                   <Ionicons name="add" size={20} color="#FF6B6B" />
+                   <Ionicons name="add" size={20} color={Colors.light.primary} />
                </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={styles.addToCartButton}
+            style={[styles.addToCartButton, { backgroundColor: Colors.light.primary }]}
             onPress={handleAddToCart}
             disabled={addingToCart}
           >
@@ -219,7 +219,6 @@ const styles = StyleSheet.create({
   },
   iconButton: {
       padding: 8,
-      backgroundColor: '#F3F4F6', // Light gray background for icons
       borderRadius: 12,
   },
   scrollContent: {
@@ -240,7 +239,6 @@ const styles = StyleSheet.create({
   rotateIndicator: {
       position: 'absolute',
       bottom: 0,
-      backgroundColor: '#FFE4E6', // Light pink
       padding: 8,
       borderRadius: 20,
   },
@@ -289,9 +287,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       borderRadius: 12,
   },
-  activeTab: {
-      backgroundColor: '#FF6B6B',
-  },
+  activeTab: {},
   tabText: {
       fontSize: 16,
       fontWeight: '600',
@@ -327,9 +323,7 @@ const styles = StyleSheet.create({
       padding: 24,
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#fff',
       borderTopWidth: 1,
-      borderTopColor: '#f0f0f0',
   },
   quantitySelector: {
       flexDirection: 'row',
@@ -352,7 +346,6 @@ const styles = StyleSheet.create({
       fontSize: 16,
   },
   addToCartButton: {
-      backgroundColor: '#FF6B6B',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

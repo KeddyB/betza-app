@@ -32,6 +32,10 @@ export default function ProfilePage() {
     router.replace('/auth/get-started');
   };
 
+  const handleLogin = () => {
+    router.push('/auth/sign-in');
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
@@ -48,7 +52,7 @@ export default function ProfilePage() {
           <Button title="Logout" onPress={handleLogout} color={Colors[colorScheme ?? 'light'].notification} />
         </>
       ) : (
-        <Text style={[styles.email, { color: Colors[colorScheme ?? 'light'].text }]}>User not logged in.</Text>
+        <Button title="Login" onPress={handleLogin} color={Colors.light.tint} />
       )}
     </View>
   );

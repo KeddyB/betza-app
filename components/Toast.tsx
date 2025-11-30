@@ -7,9 +7,10 @@ import { Colors } from '@/constants/theme';
 interface ToastProps {
   message: string;
   type: 'success' | 'error' | 'info';
+  position?: 'top' | 'bottom';
 }
 
-export const Toast = ({ message, type }: ToastProps) => {
+export const Toast = ({ message, type, position = 'bottom' }: ToastProps) => {
   let iconName: keyof typeof Ionicons.glyphMap;
   let backgroundColor: string;
   const { colorScheme } = useTheme();
@@ -31,7 +32,7 @@ export const Toast = ({ message, type }: ToastProps) => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor, [position]: 50 }]}>
       <Ionicons name={iconName} size={20} color="#fff" style={styles.icon} />
       <Text style={styles.message}>{message}</Text>
     </View>
@@ -41,7 +42,6 @@ export const Toast = ({ message, type }: ToastProps) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 50,
     left: 20,
     right: 20,
     flexDirection: 'row',

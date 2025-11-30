@@ -1,28 +1,21 @@
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/use-color-scheme';
 import { authOptions, supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function GetStartedScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colorScheme } = useTheme();
   const [loading, setLoading] = useState(false);
-
-  const colors = {
-    background: isDark ? '#1a1a1a' : '#ffffff',
-    text: isDark ? '#ffffff' : '#000000',
-    textSecondary: isDark ? '#999999' : '#666666',
-    primary: '#007AFF',
-    border: isDark ? '#333333' : '#e0e0e0',
-    googleButton: isDark ? '#2a2a2a' : '#f5f5f5',
-  };
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
     const handleDeepLink = ({ url }: { url: string }) => {
@@ -77,25 +70,22 @@ export default function GetStartedScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <View style={styles.content}>
-        {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.logo, { color: colors.text }]}>Betza</Text>
-          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
+          <Text style={[styles.logo, { color: themeColors.text }]}>Betza</Text>
+          <Text style={[styles.tagline, { color: themeColors.text + '99' }]}>
             Your trusted ecommerce store
           </Text>
         </View>
 
-        {/* Buttons Container */}
         <View style={styles.buttonContainer}>
-          {/* Google Sign In */}
           <TouchableOpacity
             style={[
               styles.googleButton,
               {
-                backgroundColor: colors.googleButton,
-                borderColor: colors.border,
+                backgroundColor: themeColors.card,
+                borderColor: themeColors.border,
                 opacity: loading ? 0.6 : 1,
               },
             ]}
@@ -109,46 +99,42 @@ export default function GetStartedScreen() {
               style={styles.googleLogo}
               contentFit="contain"
             />
-            <Text style={[styles.googleButtonText, { color: colors.text }]}>
+            <Text style={[styles.googleButtonText, { color: themeColors.text }]}>
               {loading ? 'Signing In...' : 'Continue with Google'}
             </Text>
           </TouchableOpacity>
 
-          {/* Email Sign In */}
           <TouchableOpacity
-            style={[styles.secondaryButton, { borderColor: colors.border, borderWidth: 1 }]}
-            onPress={() => router.push('/auth/sign-in-email')}
+            style={[styles.secondaryButton, { borderColor: themeColors.border, borderWidth: 1 }]}
+            onPress={() => router.push('/auth/sign-in')}
             disabled={loading}
           >
-            <Text style={[styles.secondaryButtonText, { color: colors.text }]}>
+            <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>
               Sign In with Email
             </Text>
           </TouchableOpacity>
 
-          {/* Divider */}
           <View style={styles.divider}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerText, { color: colors.textSecondary }]}>or</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+            <View style={[styles.dividerLine, { backgroundColor: themeColors.border }]} />
+            <Text style={[styles.dividerText, { color: themeColors.text + '99' }]}>or</Text>
+            <View style={[styles.dividerLine, { backgroundColor: themeColors.border }]} />
           </View>
 
-          {/* Sign Up Section */}
           <TouchableOpacity
-            style={[styles.secondaryButton, { borderColor: colors.border, borderWidth: 1 }]}
+            style={[styles.secondaryButton, { borderColor: themeColors.border, borderWidth: 1 }]}
             onPress={() => router.push('/auth/sign-up')}
             disabled={loading}
           >
-            <Text style={[styles.secondaryButtonText, { color: colors.text }]}>
+            <Text style={[styles.secondaryButtonText, { color: themeColors.text }]}>
               Create Account
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+          <Text style={[styles.footerText, { color: themeColors.text + '99' }]}>
             By continuing, you agree to our{' '}
-            <Text style={{ color: colors.primary }}>Terms of Service</Text>
+            <Text style={{ color: themeColors.primary }}>Terms of Service</Text>
           </Text>
         </View>
       </View>

@@ -1,41 +1,41 @@
 import { authOptions, supabase } from '@/lib/supabase';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/use-color-scheme';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from '@/constants/theme';
+import * as WebBrowser from 'expo-web-browser';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignUpGoogleScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { colorScheme } = useTheme();
   const [loading, setLoading] = useState(false);
-
-  const colors = {
-    background: isDark ? '#1a1a1a' : '#ffffff',
-    text: isDark ? '#ffffff' : '#000000',
-    textSecondary: isDark ? '#999999' : '#666666',
-    primary: '#007AFF',
-    googleButton: isDark ? '#2a2a2a' : '#f5f5f5',
-    googleBorder: isDark ? '#333333' : '#e0e0e0',
-  };
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   const handleGoogleSignUp = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectUrl = authOptions.redirectTo;
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: authOptions.redirectTo,
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: true,
         },
       });
 
       if (error) {
-        Alert.alert('Error', 'Failed to sign up with Google');
-        console.error(error);
+        Alert.alert('Error', error.message);
+        return;
       }
-    } catch {
-      Alert.alert('Error', 'Failed to sign up with Google');
+
+      if (data?.url) {
+        await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error?.message || 'Failed to sign up');
     } finally {
       setLoading(false);
     }
@@ -46,14 +46,14 @@ export default function SignUpGoogleScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack}>
-            <Text style={[styles.backButton, { color: colors.primary }]}>← Back</Text>
+            <Text style={[styles.backButton, { color: themeColors.primary }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: colors.text }]}>Sign Up with Google</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Sign Up with Google</Text>
+          <Text style={[styles.subtitle, { color: themeColors.text + '99' }]}>
             Create an account using your Google account
           </Text>
         </View>
@@ -63,8 +63,8 @@ export default function SignUpGoogleScreen() {
             style={[
               styles.googleButton,
               {
-                backgroundColor: colors.googleButton,
-                borderColor: colors.googleBorder,
+                backgroundColor: themeColors.card,
+                borderColor: themeColors.border,
                 opacity: loading ? 0.6 : 1,
               },
             ]}
@@ -78,7 +78,7 @@ export default function SignUpGoogleScreen() {
               style={styles.googleLogo}
               contentFit="contain"
             />
-            <Text style={[styles.googleButtonText, { color: colors.text }]}>
+            <Text style={[styles.googleButtonText, { color: themeColors.text }]}>
               {loading ? 'Signing Up...' : 'Continue with Google'}
             </Text>
           </TouchableOpacity>

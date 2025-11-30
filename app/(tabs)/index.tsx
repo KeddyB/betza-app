@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable, TextInput } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -62,20 +62,6 @@ export default function HomePage() {
 
   return (
     <View style={[styles.mainContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-      {/* Custom Header */}
-      <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <View style={styles.locationContainer}>
-            <Ionicons name="bicycle-outline" size={24} color={Colors[colorScheme ?? 'light'].text} />
-            <View style={styles.locationTextContainer}>
-                <Text style={[styles.locationText, { color: Colors[colorScheme ?? 'light'].text }]}>61 Hopper street..</Text>
-                <Ionicons name="chevron-down" size={16} color={Colors[colorScheme ?? 'light'].text} />
-            </View>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/cart')}>
-            <Ionicons name="bag-outline" size={24} color={Colors[colorScheme ?? 'light'].text} />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Promotional Banner */}
         <View style={styles.bannerContainer}>
@@ -148,28 +134,6 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    paddingTop: 50, // Adjust for status bar
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  locationTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  locationText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   container: {
     flex: 1,

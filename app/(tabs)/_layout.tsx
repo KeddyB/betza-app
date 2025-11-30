@@ -2,7 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
 import { Colors } from '@/constants/theme';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { View, TextInput, StyleSheet, Text, Pressable } from 'react-native'; // Import TouchableOpacity
+import { View, TextInput, StyleSheet, Text } from 'react-native'; // Import TouchableOpacity
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 
@@ -33,7 +33,7 @@ function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | und
 }
 
 export default function TabLayout() {
-  const { colorScheme, toggleTheme } = useTheme(); // Use the new useTheme hook
+  const { colorScheme } = useTheme(); 
   const { cart } = useCart();
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -53,15 +53,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
           header: () => (
             <View style={[styles.customHeader, { backgroundColor: Colors[colorScheme ?? 'light'].background, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
-              <View style={styles.headerTopRow}>
-                <Pressable onPress={toggleTheme}>
-                  <Ionicons
-                    name={colorScheme === 'light' ? 'moon' : 'sunny'}
-                    size={24}
-                    color={Colors[colorScheme ?? 'light'].text}
-                  />
-                </Pressable>
-              </View>
               <SearchBar colorScheme={colorScheme} />
             </View>
           ),
@@ -77,7 +68,7 @@ export default function TabLayout() {
               <MaterialIcons name="shopping-cart" size={24} color={color} />
               {totalCartItems > 0 && (
                 <View style={styles.badgeContainer}>
-                  <Text style={[styles.badgeText, {color: Colors[colorScheme ?? 'light'].text}]}>{totalCartItems}</Text>
+                  <Text style={styles.badgeText}>{totalCartItems}</Text>
                 </View>
               )}
             </View>
@@ -100,10 +91,9 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b', // This will be overridden by inline style
     borderRadius: 8,
     paddingHorizontal: 12,
-    width: '90%',
+    marginHorizontal: 15,
   },
   searchIcon: {
     marginRight: 8,
@@ -117,9 +107,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: -6,
     top: -3,
-    backgroundColor: 'transparent', // Make inner transparent
-    borderColor: '#ef4444', // Red border
-    borderWidth: 2,
+    backgroundColor: 'red',
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -127,20 +115,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeText: {
+    color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
   },
   customHeader: {
     paddingTop: 50, // Adjust based on status bar height for iOS/Android
-    paddingHorizontal: 15,
     paddingBottom: 10,
     borderBottomWidth: 1,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
   },
   headerTitle: {
     fontSize: 24,
