@@ -4,29 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ede9ba4-ab28-4e41-96cb-9a6a0790bf7f" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/category/[category].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/cart.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/cart.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/profile.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/get-started.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/get-started.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-in.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/sign-in.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-up-google.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/sign-up-google.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-up.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/sign-up.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/context/CartContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/context/CartContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/context/ToastContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/context/ToastContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/product/[id].tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/product/[id].tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/ProductCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/ProductCard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/components/Toast.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/components/Toast.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-    </list>
+    <list default="true" id="7ede9ba4-ab28-4e41-96cb-9a6a0790bf7f" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
