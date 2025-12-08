@@ -1,17 +1,23 @@
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TextInput, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CategoryPage() {
   const { category } = useLocalSearchParams();
   const { colorScheme } = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter();
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -19,7 +25,6 @@ export default function CategoryPage() {
 
       try {
         setLoading(true);
-        // First, find the category ID from the category name
         const { data: categoryData, error: categoryError } = await supabase
           .from('categories')
           .select('id')
@@ -32,10 +37,12 @@ export default function CategoryPage() {
           return;
         }
 
-        const { data, error } = await supabase
-          .from('products')
-          .select('* ')
-          .eq('category_id', categoryData.id);
+        let query = supabase.from('products').select('*').eq('category_id', categoryData.id);
+        if(searchQuery) {
+          query = query.textSearch('name', searchQuery, { type: 'websearch' });
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           console.error('Error fetching products:', error);
@@ -48,40 +55,80 @@ export default function CategoryPage() {
     };
 
     fetchProducts();
-  }, [category]);
+  }, [category, searchQuery]);
+
+  const renderSkeletons = () => (
+    <View style={styles.columnWrapper}>
+      {[...Array(8)].map((_, index) => <ProductCardSkeleton key={index} />)}
+    </View>
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-      <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>{category}</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <Text style={[styles.title, { color: themeColors.text }]}>{category}</Text>
+
+      <View style={[styles.searchContainer, { backgroundColor: themeColors.card }]}>
+        <Ionicons name="search" size={20} color={themeColors.text} style={styles.searchIcon} />
+        <TextInput
+          style={[styles.searchInput, { color: themeColors.text }]}
+          placeholder={`Search in ${category}...`}
+          placeholderTextColor={themeColors.text + '80'}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
+      </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+        renderSkeletons()
       ) : (
         <FlatList
           data={products}
           numColumns={2}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <ProductCard product={item} onPress={() => {}} />
+            <ProductCard product={item} onPress={() => router.push(`/product/${item.id}`)} />
           )}
           contentContainerStyle={styles.listContainer}
+          columnWrapperStyle={styles.columnWrapper}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    paddingTop: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 16,
   },
   listContainer: {
+    paddingBottom: 16,
+  },
+  columnWrapper: {
     justifyContent: 'space-between',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
 });

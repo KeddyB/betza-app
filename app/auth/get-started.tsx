@@ -5,9 +5,9 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Colors } from '@/constants/theme';
+import { Alert, StyleSheet, Text, TouchableOpacity, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors } from '@/constants/theme';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -129,6 +129,17 @@ export default function GetStartedScreen() {
               Create Account
             </Text>
           </TouchableOpacity>
+
+            <TouchableOpacity
+                style={styles.guestButton}
+                onPress={() => router.replace('/(tabs)')}
+                disabled={loading}
+            >
+                <Text style={[styles.guestButtonText, { color: themeColors.text + '99' }]}>
+                Continue without logging in
+                </Text>
+            </TouchableOpacity>
+
         </View>
 
         <View style={styles.footer}>
@@ -209,8 +220,20 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
     fontSize: 14,
   },
+    guestButton: {
+        marginTop: 8,
+        paddingVertical: 14,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    guestButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
   footer: {
     alignItems: 'center',
+    marginTop: 20,
   },
   footerText: {
     fontSize: 12,

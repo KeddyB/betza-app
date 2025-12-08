@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Image, ScrollView, Pressable, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, Pressable, ActivityIndicator, TouchableOpacity, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/types';
 import { useTheme } from '@/hooks/use-color-scheme';
@@ -8,24 +8,34 @@ import { Colors } from '@/constants/theme';
 import { useCart } from '@/app/context/CartContext';
 import { useToast } from '@/app/context/ToastContext';
 import { Ionicons } from '@expo/vector-icons';
+import ProductCard from '@/components/ProductCard';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useWishlist } from '@/app/context/WishlistContext';
 
 function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { colorScheme } = useTheme();
   const { cart, addToCart } = useCart();
   const { showToast } = useToast();
+  const { wishlist, addToWishlist, removeFromWishlist, isProductInWishlist } = useWishlist();
   const [addingToCart, setAddingToCart] = useState(false);
   const [activeTab, setActiveTab] = useState<'Description' | 'Review'>('Description');
 
-  // Get current quantity from cart
-  const currentQuantity = cart.find(item => item.id === product?.id)?.quantity || 1; // Default to 1 for selection
+  const currentQuantity = cart.find(item => item.id === product?.id)?.quantity || 1;
   const [quantity, setQuantity] = useState(currentQuantity);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   useEffect(() => {
-    // If item is in cart, sync quantity. If not, default to 1 for the selector.
+    if(product) {
+        setIsInWishlist(isProductInWishlist(product.id));
+    }
+  }, [wishlist, product]);
+
+  useEffect(() => {
     const inCartQty = cart.find(item => item.id === product?.id)?.quantity;
     if (inCartQty) {
         setQuantity(inCartQty);
@@ -46,6 +56,7 @@ function ProductDetailScreen() {
         console.error('Error fetching product details:', error);
       } else {
         setProduct(data);
+        fetchRelatedProducts(data.category_id, data.id);
       }
       setLoading(false);
     };
@@ -53,50 +64,61 @@ function ProductDetailScreen() {
     fetchProduct();
   }, [id]);
 
+  const fetchRelatedProducts = async (categoryId: number, currentProductId: string) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category_id', categoryId)
+      .neq('id', currentProductId)
+      .limit(4);
+    if (!error) {
+      setRelatedProducts(data);
+    }
+  };
+
   const handleAddToCart = () => {
     if (product) {
       setAddingToCart(true);
       setTimeout(() => {
-        addToCart(product, quantity); // Add current selected quantity
+        addToCart(product, quantity);
         showToast(`${product.name} added to cart!`, 'success');
         setAddingToCart(false);
       }, 300);
     }
   };
-
-  const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
+  
+  const handleWishlistToggle = () => {
+    if (!product) return;
+    if (isInWishlist) {
+      removeFromWishlist(product.id);
+      showToast(`${product.name} removed from wishlist!`, 'info', 'top');
+    } else {
+      addToWishlist(product);
+      showToast(`${product.name} added to wishlist!`, 'success', 'top');
     }
   };
 
   if (loading) {
     return (
-      <View style={[styles.loaderContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+      <SafeAreaView style={[styles.loaderContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!product) {
     return (
-      <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         <Text style={{ color: Colors[colorScheme ?? 'light'].text }}>Product not found.</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  // Mock data
   const rating = product.rating || 4.8;
   const reviewCount = product.review_count || 198;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        {/* Custom Header */}
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
                 <Ionicons name="arrow-back" size={24} color={Colors[colorScheme ?? 'light'].text} />
@@ -110,10 +132,6 @@ function ProductDetailScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.imageContainer}>
              <Image source={{ uri: product.image_url }} style={styles.image} resizeMode="contain" />
-             {/* 360 Indicator - Cosmetic */}
-             <View style={styles.rotateIndicator}>
-                 <Ionicons name="code-working" size={20} color={Colors.light.primary} />
-             </View>
         </View>
 
         <View style={styles.detailsContainer}>
@@ -130,7 +148,6 @@ function ProductDetailScreen() {
             <Text style={[styles.ratingText, { color: Colors[colorScheme ?? 'light'].text }]}> {rating} ({reviewCount} review)</Text>
           </View>
 
-          {/* Tabs */}
           <View style={styles.tabContainer}>
               <Pressable onPress={() => setActiveTab('Description')} style={[styles.tab, activeTab === 'Description' && styles.activeTab, activeTab === 'Description' && { backgroundColor: Colors.light.primary }]}>
                   <Text style={[styles.tabText, activeTab === 'Description' ? styles.activeTabText : { color: Colors[colorScheme ?? 'light'].text }]}>Description</Text>
@@ -145,29 +162,26 @@ function ProductDetailScreen() {
             <Text style={{ fontWeight: 'bold', color: Colors[colorScheme ?? 'light'].text }}> See more</Text>
           </Text>
 
-          {/* Color/Variant Selection - Mock */}
-          <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>Color</Text>
-          <View style={styles.variantContainer}>
-              {['#D1D5DB', '#FECACA', '#BFDBFE', '#A7F3D0'].map((color, index) => (
-                  <View key={index} style={[styles.variantCircle, { backgroundColor: color, borderColor: index === 1 ? Colors.light.primary : 'transparent', borderWidth: index === 1 ? 2 : 0 }]} />
-              ))}
-          </View>
-
+          <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text, marginTop: 24 }]}>Related Products</Text>
         </View>
+        <FlatList
+            data={relatedProducts}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={{ marginRight: 16 }}>
+                <ProductCard product={item} onPress={() => router.push(`/product/${item.id}`)} />
+              </View>
+            )}
+            contentContainerStyle={{ paddingLeft: 24, paddingRight: 12 }}
+        />
       </ScrollView>
 
-      {/* Bottom Action Bar */}
       <View style={[styles.bottomBar, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-          <View style={[styles.quantitySelector, { backgroundColor: Colors[colorScheme ?? 'light'].card }]}>
-               <TouchableOpacity onPress={decrementQuantity} style={styles.qtyBtn}>
-                   <Ionicons name="remove" size={20} color={Colors.light.primary} />
-               </TouchableOpacity>
-               <Text style={[styles.qtyText, { color: Colors[colorScheme ?? 'light'].text }]}>{quantity} kg</Text>
-               <TouchableOpacity onPress={incrementQuantity} style={styles.qtyBtn}>
-                   <Ionicons name="add" size={20} color={Colors.light.primary} />
-               </TouchableOpacity>
-          </View>
-
+            <TouchableOpacity onPress={handleWishlistToggle} style={styles.wishlistButton}>
+                <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={28} color={isInWishlist ? Colors.light.notification : Colors.light.primary} />
+            </TouchableOpacity>
           <TouchableOpacity
             style={[styles.addToCartButton, { backgroundColor: Colors.light.primary }]}
             onPress={handleAddToCart}
@@ -183,7 +197,7 @@ function ProductDetailScreen() {
              )}
           </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -209,9 +223,9 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingTop: 50, // Status bar
       paddingHorizontal: 20,
       paddingBottom: 10,
+      paddingTop: 20,
   },
   headerTitle: {
       fontSize: 18,
@@ -236,17 +250,11 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '80%',
   },
-  rotateIndicator: {
-      position: 'absolute',
-      bottom: 0,
-      padding: 8,
-      borderRadius: 20,
-  },
   detailsContainer: {
     padding: 24,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -20, // Overlap slightly if background differs
+    marginTop: -20, 
   },
   titleRow: {
       flexDirection: 'row',
@@ -305,53 +313,30 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
       marginBottom: 12,
   },
-  variantContainer: {
-      flexDirection: 'row',
-      gap: 16,
-  },
-  variantCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-  },
   bottomBar: {
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
       flexDirection: 'row',
-      padding: 24,
+      padding: 16,
       alignItems: 'center',
-      justifyContent: 'space-between',
       borderTopWidth: 1,
+      gap: 16,
   },
-  quantitySelector: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderRadius: 16,
-      padding: 6,
-      width: '40%',
-      justifyContent: 'space-between',
-  },
-  qtyBtn: {
-      width: 36,
-      height: 36,
+  wishlistButton: {
+      padding: 12,
       borderRadius: 12,
-      backgroundColor: '#fff',
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  qtyText: {
-      fontWeight: 'bold',
-      fontSize: 16,
+      borderWidth: 1,
+      borderColor: Colors.light.primary,
   },
   addToCartButton: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 16,
       borderRadius: 16,
-      width: '55%',
   },
   addToCartText: {
       color: '#fff',

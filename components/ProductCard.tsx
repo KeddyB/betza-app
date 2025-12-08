@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, Dimensions, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Product } from '@/lib/types';
 import { useCart } from '@/app/context/CartContext';
@@ -6,6 +6,7 @@ import { useToast } from '@/app/context/ToastContext';
 import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { useWishlist } from '@/app/context/WishlistContext';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,8 @@ interface ProductCardProps {
 }
 
 const { width } = Dimensions.get('window');
+// Correct width for a 2-column grid with 16px padding and 16px gap
+// (Screen Width - Left Padding - Right Padding - Gap) / 2 => (width - 16 - 16 - 16) / 2
 const productWidth = (width - 48) / 2;
 
 export default function ProductCard({ product, onPress }: ProductCardProps) {
@@ -20,13 +23,19 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
   const { showToast } = useToast();
   const { colorScheme } = useTheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { wishlist, addToWishlist, removeFromWishlist, isProductInWishlist } = useWishlist();
 
   const [quantity, setQuantity] = useState(0);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   useEffect(() => {
     const cartItem = cart.find(item => item.id === product.id);
     setQuantity(cartItem ? cartItem.quantity : 0);
   }, [cart, product.id]);
+
+  useEffect(() => {
+    setIsInWishlist(isProductInWishlist(product.id));
+  }, [wishlist, product.id]);
 
   const handleAddToCart = useCallback(() => {
     addToCart(product, 1);
@@ -46,6 +55,16 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
     }
   }, [product.id, quantity, removeFromCart, updateCartQuantity, showToast]);
 
+  const handleWishlistToggle = () => {
+    if (isInWishlist) {
+      removeFromWishlist(product.id);
+      showToast(`${product.name} removed from wishlist!`, 'info', 'top');
+    } else {
+      addToWishlist(product);
+      showToast(`${product.name} added to wishlist!`, 'success', 'top');
+    }
+  };
+
   return (
     <Pressable
       onPress={onPress}
@@ -61,6 +80,9 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
           style={styles.image}
           resizeMode="contain"
         />
+        <Pressable onPress={handleWishlistToggle} style={styles.wishlistButton}>
+            <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={24} color={isInWishlist ? themeColors.notification : themeColors.text} />
+        </Pressable>
         <View style={styles.priceContainer}>
           <Text style={styles.productPrice}>₦{product.price.toFixed(2)}</Text>
         </View>
@@ -69,9 +91,6 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
       <View style={styles.content}>
         <Text style={[styles.productName, { color: themeColors.text }]} numberOfLines={1}>
           {product.name}
-        </Text>
-        <Text style={[styles.categoryName, { color: themeColors.text + '99' }]} numberOfLines={1}>
-          Household Equipment
         </Text>
       </View>
 
@@ -140,16 +159,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#064E3B',
   },
+  wishlistButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    padding: 4,
+  },
   content: {
     marginBottom: 10,
   },
   productName: {
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  categoryName: {
-    fontSize: 12,
-    marginTop: 2,
   },
   addToCartButton: {
     flexDirection: 'row',

@@ -7,10 +7,10 @@
     "icon": "./assets/images/icon.png",
     "scheme": "betza",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.betza.app"
+      "bundleIdentifier": "com.betza.app",
+      "newArch": true
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,8 @@
       },
       "package": "com.betza.app",
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "newArch": true
     },
     "web": {
       "output": "static",
@@ -42,11 +43,17 @@
         }
       ],
       "expo-sqlite",
-      "expo-secure-store",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a435511f-c5e0-4946-8ed0-098699a5ac19"
+      }
     }
   }
 }

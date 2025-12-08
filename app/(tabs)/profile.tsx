@@ -1,31 +1,27 @@
-import { View, Text, Button, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { colorScheme } = useTheme();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const themeColors = Colors[colorScheme ?? 'light'];
+  const { user, loading } = useAuth();
+  const [firstName, setFirstName] = useState('');
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
+    if (user && user.user_metadata) {
+      const fullName = user.user_metadata.full_name || '';
+      setFirstName(fullName.split(' ')[0]);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -33,40 +29,124 @@ export default function ProfilePage() {
   };
 
   const handleLogin = () => {
-    router.push('/auth/sign-in');
+    router.push('/auth/get-started');
   };
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+      <View style={[styles.container, { backgroundColor: themeColors.background, justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={themeColors.tint} />
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       {user ? (
         <>
-          <Text style={[styles.email, { color: Colors[colorScheme ?? 'light'].text }]}>{user.email}</Text>
-          <Button title="Logout" onPress={handleLogout} color={Colors[colorScheme ?? 'light'].notification} />
+          <View style={styles.profileHeader}>
+            <Text style={[styles.welcomeMessage, { color: themeColors.text }]}>Welcome, {firstName}</Text>
+            <Text style={[styles.email, { color: themeColors.text + '99' }]}>{user.email}</Text>
+          </View>
+
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: themeColors.border }]} onPress={() => router.push('/orders')}>
+                <Ionicons name="cube-outline" size={24} color={themeColors.text} />
+                <Text style={[styles.menuItemText, { color: themeColors.text }]}>Orders</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: themeColors.border }]} onPress={() => router.push('/wishlist')}>
+                <Ionicons name="heart-outline" size={24} color={themeColors.text} />
+                <Text style={[styles.menuItemText, { color: themeColors.text }]}>Wishlist</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: themeColors.border }]} onPress={() => router.push('/account-management')}>
+                <Ionicons name="person-outline" size={24} color={themeColors.text} />
+                <Text style={[styles.menuItemText, { color: themeColors.text }]}>Account Management</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomColor: themeColors.border }]} onPress={() => router.push('/address-book')}>
+                <Ionicons name="home-outline" size={24} color={themeColors.text} />
+                <Text style={[styles.menuItemText, { color: themeColors.text }]}>Address Book</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Pressable style={({ pressed }) => [styles.logoutButton, { backgroundColor: pressed ? themeColors.notification + 'E6' : themeColors.notification }]} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={22} color="#fff" />
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          </Pressable>
         </>
       ) : (
-        <Button title="Login" onPress={handleLogin} color={Colors.light.tint} />
+        <View style={styles.loginContainer}>
+            <Text style={[styles.loginText, { color: themeColors.text }]}>You are not logged in.</Text>
+            <Pressable style={({ pressed }) => [styles.loginButton, { backgroundColor: pressed ? themeColors.primary + 'E6' : themeColors.primary }]} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Login</Text>
+            </Pressable>
+        </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
+    padding: 24,
+    paddingTop: 48,
+  },
+  profileHeader: {
+      alignItems: 'center',
+      marginBottom: 32,
+  },
+  welcomeMessage: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 4,
   },
   email: {
-    fontSize: 18,
-    marginBottom: 24,
+      fontSize: 16,
   },
+  menuContainer: {
+      flex: 1,
+  },
+  menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      gap: 16,
+  },
+  menuItemText: {
+      fontSize: 16,
+      fontWeight: '500',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loginContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: 24,
+  },
+  loginText: {
+      fontSize: 18,
+  },
+  loginButton: {
+      paddingVertical: 14,
+      paddingHorizontal: 48,
+      borderRadius: 12,
+  },
+  loginButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+  }
 });

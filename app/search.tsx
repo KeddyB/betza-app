@@ -1,104 +1,92 @@
-import { View, Text, StyleSheet, FlatList, Image, Dimensions, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router'; // Import Stack
+import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 
-function SearchScreenContent() {
+export default function SearchScreen() {
   const { q } = useLocalSearchParams();
+  const { colorScheme } = useTheme();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const { colorScheme } = useTheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
     const fetchProducts = async () => {
-      if (typeof q !== 'string' || q.length < 3) {
-        setProducts([]);
+      if (!q) return;
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .textSearch('name', q as string, { type: 'websearch' });
+
+        if (error) {
+          console.error('Error fetching products:', error);
+        } else {
+          setProducts(data);
+        }
+      } finally {
         setLoading(false);
-        return;
       }
-
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .ilike('name', `%${q}%`); // Use ilike for case-insensitive search
-
-      if (error) {
-        console.error('Error fetching search results:', error);
-      } else {
-        setProducts(data);
-      }
-      setLoading(false);
     };
 
     fetchProducts();
   }, [q]);
 
-  return (
-    <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-      <Text style={[styles.title, { color: Colors[colorScheme ?? 'light'].text }]}>Search Results for "{q}"</Text>
-      {loading ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
+  const renderSkeletons = () => (
+    <View style={styles.listContainer}>
+        <View style={styles.columnWrapper}>
+            {[...Array(8)].map((_, index) => <ProductCardSkeleton key={index} />)}
         </View>
-      ) : products.length > 0 ? (
-        <FlatList
-          data={products}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              onPress={() => router.push(`/product/${item.id}`)}
-            />
-          )}
-          contentContainerStyle={styles.listContainer}
-        />
-      ) : (
-        <Text style={[styles.emptyText, { color: Colors[colorScheme ?? 'light'].text }]}>No products found for "{q}"</Text>
-      )}
     </View>
   );
-}
 
-export default function SearchPage() {
   return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <SearchScreenContent />
-    </>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <Text style={[styles.title, { color: themeColors.text }]}>Search results for "{q}"</Text>
+
+        {loading ? (
+            renderSkeletons()
+        ) : (
+            <FlatList
+            data={products}
+            numColumns={2}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+                <ProductCard product={item} onPress={() => {}} />
+            )}
+            contentContainerStyle={styles.listContainer}
+            columnWrapperStyle={styles.columnWrapper}
+            />
+        )}
+    </SafeAreaView>
   );
 }
-
-const { width } = Dimensions.get('window');
-const productCardWidth = (width - 48) / 2; // 16 padding on each side, 16 gap in between
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
+    paddingTop: 20,
   },
   listContainer: {
-    justifyContent: 'space-between',
+    paddingBottom: 16,
   },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
+  columnWrapper: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
 });

@@ -1,12 +1,14 @@
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable, TextInput } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Product, Category } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
+import CategorySkeleton from '@/components/CategorySkeleton';
 
 interface GroupedProducts {
   [key: string]: Product[];
@@ -18,52 +20,72 @@ export default function HomePage() {
   const [groupedProducts, setGroupedProducts] = useState<GroupedProducts>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchHomeData = async () => {
+    try {
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*');
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', JSON.stringify(categoriesError, null, 2));
+      }
+      setCategories(categoriesData || []);
+
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*');
+
+      if (productsError) {
+        console.error('Error fetching products:', JSON.stringify(productsError, null, 2));
+      }
+
+      const grouped = (productsData || []).reduce((acc: GroupedProducts, product: Product) => {
+        const categoryName = categoriesData?.find(cat => cat.id === product.category_id)?.name || 'Uncategorized';
+        if (!acc[categoryName]) {
+          acc[categoryName] = [];
+        }
+        acc[categoryName].push(product);
+        return acc;
+      }, {});
+      setGroupedProducts(grouped);
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoading(true);
-        // Fetch categories first
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*');
-
-        if (categoriesError) {
-          console.error('Error fetching categories:', JSON.stringify(categoriesError, null, 2));
-        }
-        setCategories(categoriesData || []);
-
-        // Fetch products and group them
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*');
-
-        if (productsError) {
-          console.error('Error fetching products:', JSON.stringify(productsError, null, 2));
-        }
-
-        const grouped = (productsData || []).reduce((acc: GroupedProducts, product: Product) => {
-          const categoryName = categoriesData?.find(cat => cat.id === product.category_id)?.name || 'Uncategorized';
-          if (!acc[categoryName]) {
-            acc[categoryName] = [];
-          }
-          acc[categoryName].push(product);
-          return acc;
-        }, {});
-        setGroupedProducts(grouped);
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
+    setLoading(true);
     fetchHomeData();
   }, []);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchHomeData();
+    setRefreshing(false);
+  }, []);
+
+  const renderProductSkeletons = () => (
+    <View style={styles.productsGrid}>
+      {[...Array(4)].map((_, index) => <ProductCardSkeleton key={index} />)}
+    </View>
+  );
+
+  const renderCategorySkeletons = () => (
+    <View style={styles.categoriesContainer}>
+        {[...Array(5)].map((_, index) => <CategorySkeleton key={index} />)}
+    </View>
+  );
+
   return (
     <View style={[styles.mainContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Promotional Banner */}
+      <ScrollView 
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <View style={styles.bannerContainer}>
             <View style={styles.bannerContent}>
                 <Text style={styles.bannerTitle}>Up to 30% offer</Text>
@@ -73,36 +95,32 @@ export default function HomePage() {
                 </Pressable>
             </View>
             <Image
-                source={{ uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }} // Fresh produce basket image
+                source={{ uri: 'https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80' }}
                 style={styles.bannerImage}
                 resizeMode="cover"
             />
         </View>
 
-        {/* Circular Categories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
-          {loading ? (
-             <ActivityIndicator size="small" color={Colors[colorScheme ?? 'light'].tint} />
-          ) : (
-             categories.map((category) => (
+        {loading && !refreshing ? (
+            renderCategorySkeletons()
+        ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+            {categories.map((category) => (
                 <TouchableOpacity key={category.id} style={styles.categoryItem} onPress={() => router.push(`/category/${category.name}`)}>
-                   <View style={styles.categoryIconCircle}>
-                      <Image
-                        source={{ uri: category.icon || 'https://cdn-icons-png.flaticon.com/512/3082/3082025.png' }} // Fallback or use real icons if available
+                    <View style={styles.categoryIconCircle}>
+                    <Image
+                        source={{ uri: category.icon || 'https://cdn-icons-png.flaticon.com/512/3082/3082025.png' }}
                         style={styles.categoryImage}
-                      />
-                   </View>
-                   <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>{category.name}</Text>
+                    />
+                    </View>
+                    <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>{category.name}</Text>
                 </TouchableOpacity>
-             ))
-          )}
-        </ScrollView>
+            ))}
+            </ScrollView>
+        )}
 
-        {/* Product Sections */}
-        {loading ? (
-           <View style={{ padding: 16 }}>
-             <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-           </View>
+        {loading && !refreshing ? (
+          <View style={{ paddingHorizontal: 16 }}>{renderProductSkeletons()}</View>
         ) : (
            Object.keys(groupedProducts).map((categoryName) => (
              <View key={categoryName} style={styles.sectionContainer}>
@@ -139,7 +157,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerContainer: {
-    backgroundColor: '#D1FAE5', // Light green background
+    backgroundColor: '#D1FAE5',
     margin: 16,
     borderRadius: 16,
     height: 160,
@@ -156,17 +174,17 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#064E3B', // Dark green
+    color: '#064E3B',
     marginBottom: 4,
   },
   bannerSubtitle: {
     fontSize: 14,
-    color: '#10B981', // Green
+    color: '#10B981',
     fontWeight: '600',
     marginBottom: 16,
   },
   shopNowButton: {
-    backgroundColor: '#10B981', // Green button
+    backgroundColor: '#10B981',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -188,6 +206,7 @@ const styles = StyleSheet.create({
   categoriesContainer: {
     paddingHorizontal: 16,
     marginBottom: 24,
+    flexDirection: 'row',
   },
   categoryItem: {
     alignItems: 'center',
@@ -197,7 +216,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#F3F4F6', // Light gray
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -229,5 +248,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 10,
   },
 });

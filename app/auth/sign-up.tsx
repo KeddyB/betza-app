@@ -12,11 +12,12 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const themeColors = Colors[colorScheme ?? 'light'];
 
   const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !fullName) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -31,6 +32,11 @@ export default function SignUpScreen() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
       if (error) {
@@ -64,6 +70,21 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.form}>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: themeColors.card,
+                borderColor: themeColors.border,
+                color: themeColors.text,
+              },
+            ]}
+            placeholder="Full Name"
+            placeholderTextColor={themeColors.text + '99'}
+            value={fullName}
+            onChangeText={setFullName}
+            editable={!loading}
+          />
           <TextInput
             style={[
               styles.input,

@@ -12,7 +12,8 @@ export default function AccountManagementScreen() {
   const { user } = useAuth();
 
   const [fullName, setFullName] = useState('');
-  const [password, setPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +32,7 @@ export default function AccountManagementScreen() {
     });
 
     if (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error updating profile', error.message);
     } else {
       Alert.alert('Success', 'Your profile has been updated.');
     }
@@ -39,26 +40,54 @@ export default function AccountManagementScreen() {
   };
 
   const handleUpdatePassword = async () => {
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
-      return;
-    }
-    if (!password) {
-        Alert.alert('Error', 'Please enter a new password.');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        Alert.alert('Error', 'Please fill in all password fields.');
         return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'New passwords do not match.');
+      return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    // Note: Supabase implicitly requires a recent sign-in to update a password.
+    // For a better user experience, you could reauthenticate here first.
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error updating password', error.message);
     } else {
       Alert.alert('Success', 'Your password has been updated.');
-      setPassword('');
+      setCurrentPassword('');
+      setNewPassword('');
       setConfirmPassword('');
     }
     setLoading(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action is irreversible.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            setLoading(true);
+            const { error } = await supabase.functions.invoke('delete-user');
+            if (error) {
+                Alert.alert('Error', 'Could not delete your account. Please try again.');
+            } else {
+                Alert.alert('Success', 'Your account has been deleted.');
+                await supabase.auth.signOut();
+            }
+            setLoading(false);
+          }
+        },
+      ]
+    );
   };
 
   return (
@@ -71,6 +100,7 @@ export default function AccountManagementScreen() {
           style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
           value={fullName}
           onChangeText={setFullName}
+          editable={!loading}
         />
         <Pressable
           style={({ pressed }) => [styles.button, { backgroundColor: pressed ? themeColors.primary + 'E6' : themeColors.primary, opacity: loading ? 0.6 : 1 }]}
@@ -82,13 +112,22 @@ export default function AccountManagementScreen() {
       </View>
 
       <View style={styles.formSection}>
-        <Text style={[styles.label, { color: themeColors.text }]}>New Password</Text>
+        <Text style={[styles.label, { color: themeColors.text }]}>Change Password</Text>
         <TextInput
           style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
           secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter new password"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          placeholder="Current password"
+          editable={!loading}
+        />
+        <TextInput
+          style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
+          secureTextEntry
+          value={newPassword}
+          onChangeText={setNewPassword}
+          placeholder="New password"
+          editable={!loading}
         />
         <TextInput
           style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
@@ -96,14 +135,25 @@ export default function AccountManagementScreen() {
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           placeholder="Confirm new password"
+          editable={!loading}
         />
         <Pressable
           style={({ pressed }) => [styles.button, { backgroundColor: pressed ? themeColors.primary + 'E6' : themeColors.primary, opacity: loading ? 0.6 : 1 }]}
           onPress={handleUpdatePassword}
           disabled={loading}
         >
-           {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Update Password</Text>}
+          <Text style={styles.buttonText}>Update Password</Text>
         </Pressable>
+      </View>
+
+      <View style={styles.dangerZone}>
+        <Pressable
+            style={({ pressed }) => [styles.deleteButton, { opacity: pressed ? 0.8 : 1, backgroundColor: loading ? themeColors.notification + '80' : themeColors.notification }]}
+            onPress={handleDeleteAccount}
+            disabled={loading}
+            >
+            {loading ? <ActivityIndicator color="#fff"/> : <Text style={styles.buttonText}>Delete Account</Text>}
+            </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -144,4 +194,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  dangerZone: {
+      marginTop: 'auto',
+      paddingTop: 24,
+      borderTopWidth: 1,
+      borderTopColor: Colors.light.border,
+  },
+  deleteButton: {
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+  }
 });

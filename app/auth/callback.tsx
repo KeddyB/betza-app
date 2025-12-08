@@ -1,30 +1,64 @@
+import 'react-native-url-polyfill/auto';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { useColorScheme } from 'react-native';
 
-export default function CallbackPage() {
+// This screen's ONLY job is to handle the redirect and navigate.
+export default function AuthCallbackScreen() {
+  const { code } = useLocalSearchParams();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const [authStatus, setAuthStatus] = useState('pending');
 
   useEffect(() => {
-    const handleCallback = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-      if (session) {
-        router.replace('/');
-      } else if (error) {
-        console.error('Error getting session:', error.message);
-        router.replace('/auth/sign-in');
+    const exchangeCode = async () => {
+      if (code && typeof code === 'string') {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) {
+            throw error;
+          }
+          const { data } = await supabase.auth.getUser();
+          if (data.user) {
+            setAuthStatus('success');
+          } else {
+            throw new Error('User not found after session exchange');
+          }
+        } catch (e: any) {
+          setAuthStatus('error');
+          Alert.alert('Authentication Failed', e.message);
+        }
+      } else {
+        setAuthStatus('error');
+        Alert.alert('Authentication Error', 'No authentication code provided.');
       }
     };
-    handleCallback();
-  }, [router]);
+
+    exchangeCode();
+  }, [code]);
+
+  useEffect(() => {
+    if (authStatus === 'success') {
+      router.replace('/(tabs)/index');
+    } else if (authStatus === 'error') {
+      router.replace('/auth/get-started');
+    }
+  }, [authStatus]);
 
   return (
-    <View>
-      <Text>Loading...</Text>
+    <View style={[styles.container, { backgroundColor: colorScheme === 'dark' ? '#000' : '#fff' }]}>
+      <ActivityIndicator size="large" color={colorScheme === 'dark' ? '#fff' : '#000'} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

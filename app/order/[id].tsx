@@ -6,6 +6,7 @@ import { Colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import OrderDetailSkeleton from '@/components/OrderDetailSkeleton';
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -17,11 +18,14 @@ export default function OrderDetailScreen() {
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select('*, order_items(*, products(*))')
+          .select('id, created_at, total, order_items(*, products(*))')
           .eq('id', id)
           .single();
 
@@ -38,9 +42,9 @@ export default function OrderDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={themeColors.tint} />
-      </SafeAreaView>
+        <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+            <OrderDetailSkeleton />
+        </SafeAreaView>
     );
   }
 
@@ -74,7 +78,7 @@ export default function OrderDetailScreen() {
             </View>
             <View style={styles.summaryRow}>
                 <Text style={{color: themeColors.text}}>Total:</Text>
-                <Text style={{color: themeColors.primary, fontWeight: 'bold'}}>₦{(order.total_amount || 0).toFixed(2)}</Text>
+                <Text style={{color: themeColors.primary, fontWeight: 'bold'}}>₦{(order.total || 0).toFixed(2)}</Text>
             </View>
         </View>
 
@@ -111,7 +115,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     card: {
-        margin: 24,
+        marginHorizontal: 24,
+        marginTop: 0,
+        marginBottom: 24,
         padding: 16,
         borderRadius: 12,
     },
