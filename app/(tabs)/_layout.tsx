@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Tabs, useRouter } from 'expo-router';
 import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
 import { Colors } from '@/constants/theme';
@@ -36,20 +37,26 @@ export default function TabLayout() {
   const { colorScheme } = useTheme(); 
   const { cart } = useCart();
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
+=======
+import { Tabs } from 'expo-router';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/Theme';
+
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].primary,
-        tabBarStyle: {
-          backgroundColor: Colors[colorScheme ?? 'light'].background,
-          borderTopColor: Colors[colorScheme ?? 'light'].border,
-        },
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        headerShown: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
+<<<<<<< HEAD
           headerShown: true,
           tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
           header: () => (
@@ -74,19 +81,20 @@ export default function TabLayout() {
               )}
             </View>
           ),
+=======
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          headerShown: false, // Set to false
-          tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>
   );
 }
+<<<<<<< HEAD
 
 const styles = StyleSheet.create({
   searchContainer: {
@@ -130,3 +138,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+=======
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)

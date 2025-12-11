@@ -8,9 +8,13 @@
     "scheme": "betza",
     "userInterfaceStyle": "automatic",
     "ios": {
+<<<<<<< HEAD
       "supportsTablet": true,
       "bundleIdentifier": "com.betza.app",
       "newArch": true
+=======
+      "supportsTablet": true
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
     },
     "android": {
       "adaptiveIcon": {
@@ -19,10 +23,13 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "package": "com.betza.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+<<<<<<< HEAD
       "newArch": true
+=======
+      "package": "com.anonymous.betzaapp"
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
     },
     "web": {
       "output": "static",
@@ -42,8 +49,13 @@
           }
         }
       ],
+<<<<<<< HEAD
       "expo-sqlite",
       "expo-secure-store"
+=======
+      "expo-secure-store",
+      "expo-web-browser"
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
     ],
     "experiments": {
       "typedRoutes": true,

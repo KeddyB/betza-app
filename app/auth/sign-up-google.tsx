@@ -83,7 +83,7 @@ export default function SignUpGoogleScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Vien>
     </SafeAreaView>
   );
 }

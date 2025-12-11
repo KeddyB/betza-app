@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl, Dimensions, FlatList } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
@@ -71,6 +72,24 @@ export default function HomePage() {
   const renderProductSkeletons = () => (
     <View style={styles.productsGrid}>
       {[...Array(4)].map((_, index) => <ProductCardSkeleton key={index} />)}
+=======
+import { View, Text, Button } from 'react-native';
+import { supabase } from '@/lib/supabase';
+import { useRouter } from 'expo-router';
+
+export default function HomePage() {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/auth/get-started');
+  };
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Welcome!</Text>
+      <Button title="Logout" onPress={handleLogout} />
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
     </View>
   );
 
@@ -171,6 +190,7 @@ export default function HomePage() {
   </ScrollView>
 );
 }
+<<<<<<< HEAD
 
 const { width } = Dimensions.get('window');
 const productGridItemWidth = (width - 60) / 2; // (Total width - padding - gap) / 2
@@ -302,3 +322,5 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
+=======
+>>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
