@@ -5,9 +5,6 @@ export interface Product {
   image_url: string;
   category: string;
   category_id: number; // Assuming a foreign key to categories table
-  rating?: number;
-  review_count?: number;
-  description?: string;
 }
 
 export interface Category {

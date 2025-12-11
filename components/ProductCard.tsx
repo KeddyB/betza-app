@@ -11,16 +11,18 @@ import { useWishlist } from '@/app/context/WishlistContext';
 interface ProductCardProps {
   product: Product;
   onPress: () => void;
+  carouselMode?: boolean;
 }
 
 const { width } = Dimensions.get('window');
-// Correct width for a 2-column grid with 16px padding and 16px gap
-// (Screen Width - Left Padding - Right Padding - Gap) / 2 => (width - 16 - 16 - 16) / 2
-const productWidth = (width - 48) / 2;
+const productWidth = (width - 48) / 2; // Correct width for a 2-column grid with 16px padding and 16px gap
+const carouselProductWidth = width / 2.5;
 
-export default function ProductCard({ product, onPress }: ProductCardProps) {
+export default function ProductCard({ product, onPress, carouselMode = false }: ProductCardProps) {
+  const calculatedCardWidth = carouselMode ? carouselProductWidth : productWidth;
   const { cart, addToCart, removeFromCart, updateCartQuantity } = useCart();
   const { showToast } = useToast();
+  const [addingToCart, setAddingToCart] = useState(false);
   const { colorScheme } = useTheme();
   const themeColors = Colors[colorScheme ?? 'light'];
   const { wishlist, addToWishlist, removeFromWishlist, isProductInWishlist } = useWishlist();
@@ -35,33 +37,45 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
 
   useEffect(() => {
     setIsInWishlist(isProductInWishlist(product.id));
-  }, [wishlist, product.id]);
+  }, [wishlist, product.id, isProductInWishlist]);
 
   const handleAddToCart = useCallback(() => {
-    addToCart(product, 1);
-    showToast(`${product.name} added to cart!`, 'success', 'top');
+    if (product) {
+      setAddingToCart(true);
+      setTimeout(() => {
+        addToCart(product, 1);
+        showToast(`${product.name} added to cart!`, 'success', 'top');
+        setAddingToCart(false);
+      }, 500);
+    }
   }, [product, addToCart, showToast]);
 
   const incrementQuantity = useCallback(() => {
-    updateCartQuantity(product.id, quantity + 1);
-  }, [product.id, quantity, updateCartQuantity]);
+    if (product) {
+      updateCartQuantity(product.id, quantity + 1);
+    }
+  }, [product, quantity, updateCartQuantity]);
 
   const decrementQuantity = useCallback(() => {
-    if (quantity === 1) {
-      removeFromCart(product.id);
-      showToast(`${product.name} removed from cart!`, 'info', 'top');
-    } else {
-      updateCartQuantity(product.id, quantity - 1);
+    if (product) {
+      if (quantity === 1) {
+        removeFromCart(product.id);
+        showToast(`${product.name} removed from cart!`, 'info', 'top');
+      } else if (quantity > 1) {
+        updateCartQuantity(product.id, quantity - 1);
+      }
     }
-  }, [product.id, quantity, removeFromCart, updateCartQuantity, showToast]);
+  }, [product, quantity, removeFromCart, updateCartQuantity, showToast]);
 
   const handleWishlistToggle = () => {
-    if (isInWishlist) {
-      removeFromWishlist(product.id);
-      showToast(`${product.name} removed from wishlist!`, 'info', 'top');
-    } else {
-      addToWishlist(product);
-      showToast(`${product.name} added to wishlist!`, 'success', 'top');
+    if (product) {
+      if (isInWishlist) {
+        removeFromWishlist(product.id);
+        showToast(`${product.name} removed from wishlist!`, 'info', 'top');
+      } else {
+        addToWishlist(product);
+        showToast(`${product.name} added to wishlist!`, 'success', 'top');
+      }
     }
   };
 
@@ -70,7 +84,7 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { width: productWidth, backgroundColor: themeColors.card },
+        { width: calculatedCardWidth, backgroundColor: themeColors.card, borderColor: themeColors.border },
         pressed && styles.pressed,
       ]}
     >
@@ -80,47 +94,70 @@ export default function ProductCard({ product, onPress }: ProductCardProps) {
           style={styles.image}
           resizeMode="contain"
         />
-        <Pressable onPress={handleWishlistToggle} style={styles.wishlistButton}>
-            <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={24} color={isInWishlist ? themeColors.notification : themeColors.text} />
+        <Pressable
+          style={({ pressed }) => [styles.heartIcon, { backgroundColor: themeColors.card }, pressed && styles.pressed]}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleWishlistToggle();
+          }}
+        >
+          <Ionicons
+            name={isInWishlist ? 'heart' : 'heart-outline'}
+            size={20}
+            color={isInWishlist ? themeColors.notification : themeColors.text}
+          />
         </Pressable>
-        <View style={styles.priceContainer}>
-          <Text style={styles.productPrice}>₦{product.price.toFixed(2)}</Text>
-        </View>
       </View>
 
       <View style={styles.content}>
-        <Text style={[styles.productName, { color: themeColors.text }]} numberOfLines={1}>
+        <Text style={[styles.productPrice, { color: themeColors.primary }]}>₦{product.price.toFixed(2)}</Text>
+        <Text style={[styles.productName, { color: themeColors.text }]} numberOfLines={2}>
           {product.name}
         </Text>
-      </View>
+        <Text style={[styles.unit, { color: themeColors.text + '80' }]}>per unit</Text>
 
-      {quantity === 0 ? (
-        <Pressable
-          style={({ pressed }) => [
-              styles.addToCartButton,
-              {
-                backgroundColor: pressed ? '#10B981E6' : '#10B981',
-              }
-          ]}
-          onPress={(e) => {
+        {quantity === 0 ? (
+          <Pressable
+            style={({ pressed }) => [styles.addButton, { backgroundColor: themeColors.primary }, pressed && styles.pressed]}
+            onPress={(e) => {
               e.stopPropagation();
               handleAddToCart();
-          }}
-        >
-          <Ionicons name="cart-outline" size={18} color="#fff" />
-          <Text style={styles.addToCartText}>Add to Cart</Text>
-        </Pressable>
-      ) : (
-        <View style={styles.quantityControl}>
-          <Pressable onPress={decrementQuantity} style={styles.controlButton}>
-            <Ionicons name={quantity === 1 ? 'trash-outline' : 'remove'} size={18} color={'#10B981'} />
+            }}
+            disabled={addingToCart}
+          >
+            {addingToCart ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="add" size={16} color="#fff" />
+                <Text style={styles.addText}>Add to cart</Text>
+              </>
+            )}
           </Pressable>
-          <Text style={[styles.quantityText, { color: themeColors.text }]}>{quantity}</Text>
-          <Pressable onPress={incrementQuantity} style={styles.controlButton}>
-            <Ionicons name="add" size={18} color={'#10B981'} />
-          </Pressable>
-        </View>
-      )}
+        ) : (
+          <View style={[styles.quantityContainer, { backgroundColor: themeColors.inputBackground }]}>
+            <Pressable
+              style={({ pressed }) => [styles.quantityButton, pressed && styles.pressed]}
+              onPress={(e) => {
+                e.stopPropagation();
+                decrementQuantity();
+              }}
+            >
+              <Text style={[styles.quantityButtonText, { color: themeColors.primary }]}>−</Text>
+            </Pressable>
+            <Text style={[styles.quantityText, { color: themeColors.text }]}>{quantity}</Text>
+            <Pressable
+              style={({ pressed }) => [styles.quantityButton, pressed && styles.pressed]}
+              onPress={(e) => {
+                e.stopPropagation();
+                incrementQuantity();
+              }}
+            >
+              <Text style={[styles.quantityButtonText, { color: themeColors.primary }]}>+</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -130,78 +167,84 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     overflow: 'hidden',
-    padding: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   imageContainer: {
-    height: 120,
+    position: 'relative',
+    width: '100%',
+    height: 140, // Reduced image height to make room for text
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-    marginBottom: 10,
-    position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  priceContainer: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    backgroundColor: '#D1FAE5',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  productPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#064E3B',
-  },
-  wishlistButton: {
+  heartIcon: {
     position: 'absolute',
     top: 8,
     right: 8,
     padding: 4,
+    borderRadius: 20,
   },
   content: {
-    marginBottom: 10,
+    padding: 12,
+    flex: 1, // Allows content to expand and push add/quantity to bottom
+    justifyContent: 'space-between', // Distribute content vertically
+  },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   productName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  addToCartButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  addToCartText: {
-    color: '#fff',
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 8,
+    marginTop: 4,
+    marginBottom: 2,
+    height: 36, // Fixed height for consistent product name area
   },
-  quantityControl: {
+  unit: {
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  addButton: {
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#10B981',
+    paddingVertical: 6,
   },
-  controlButton: {
-    paddingHorizontal: 12,
+  quantityButton: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  quantityButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   quantityText: {
-    fontSize: 16,
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 14,
     fontWeight: '600',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.7,
   }
 });

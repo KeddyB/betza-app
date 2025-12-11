@@ -1,20 +1,27 @@
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Pressable, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  Pressable,
+  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-import { useState } from 'react';
 
-WebBrowser.maybeCompleteAuthSession();
-
-export default function CartScreen() {
-  const { cart, updateCartQuantity, removeFromCart } = useCart();
+export default function CartPage() {
+  const { cart, clearCart, updateCartQuantity, removeFromCart } = useCart();
   const { colorScheme } = useTheme();
   const router = useRouter();
   const themeColors = Colors[colorScheme ?? 'light'];
@@ -25,17 +32,17 @@ export default function CartScreen() {
 
   const verifyPayment = async (reference: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke("verify-payment", {
+      const { data, error } = await supabase.functions.invoke('verify-payment', {
         body: { reference },
       });
 
       if (error) throw new Error(error.message);
 
-      cart.length = 0;
-      alert("Payment successful! Your order has been placed.");
+      clearCart();
+      alert('Payment successful! Your order has been placed.');
       router.replace(`/order/${data.order_id}`);
     } catch (err: any) {
-      alert(err.message || "Failed to verify payment.");
+      alert(err.message || 'Failed to verify payment.');
     }
   };
 
@@ -56,47 +63,46 @@ export default function CartScreen() {
           email: user.email,
           metadata: {
             user_id: user.id,
-            cart_items: cart.map(item => ({
+            cart_items: cart.map((item) => ({
               product_id: item.id,
               quantity: item.quantity,
               price: item.price,
             })),
           },
-          redirect_url: redirectUrl
+          redirect_url: redirectUrl,
         },
       });
 
       if (error) throw new Error(error.message);
-      if (!data.authorization_url) throw new Error("Unable to initialize payment.");
+      if (!data.authorization_url) throw new Error('Unable to initialize payment.');
 
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.authorization_url,
-        redirectUrl
-      );
+      const result = await WebBrowser.openAuthSessionAsync(data.authorization_url, redirectUrl);
 
-      if (result.type === "success" && result.url) {
+      if (result.type === 'success' && result.url) {
         const { queryParams } = Linking.parse(result.url);
         const reference = queryParams?.reference || queryParams?.trxref;
 
         if (reference) {
           await verifyPayment(reference as string);
         } else {
-          alert("Payment reference missing.");
+          alert('Payment reference missing.');
         }
       }
     } catch (err: any) {
-      alert(err.message || "Something went wrong.");
+      alert(err.message || 'Something went wrong.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const incrementQuantity = (itemId: string, currentQuantity: number) => {
+  const incrementQuantity = (itemId: number, currentQuantity: number) => {
     updateCartQuantity(itemId, currentQuantity + 1);
   };
 
-  const decrementQuantity = (itemId: string, currentQuantity: number) => {
-    updateCartQuantity(itemId, currentQuantity - 1);
+  const decrementQuantity = (itemId: number, currentQuantity: number) => {
+    if (currentQuantity > 1) {
+      updateCartQuantity(itemId, currentQuantity - 1);
+    }
   };
 
   return (
@@ -198,10 +204,9 @@ const styles = StyleSheet.create({
   listContent: { padding: 16 },
   cartItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    borderRadius: 8,
     padding: 12,
-    borderRadius: 12,
+    marginBottom: 12,
   },
   imageContainer: {
     width: 60,
