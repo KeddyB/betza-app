@@ -1,78 +1,3 @@
-<<<<<<< HEAD
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable, RefreshControl, Dimensions, FlatList } from 'react-native';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { Product, Category } from '@/lib/types'; // Import Category
-import ProductCard from '@/components/ProductCard';
-import SkeletonLoader from '@/components/SkeletonLoader';
-import { useTheme } from '@/hooks/use-color-scheme';
-import { Colors } from '@/constants/theme';
-import ProductCardSkeleton from '@/components/ProductCardSkeleton';
-import CategorySkeleton from '@/components/CategorySkeleton';
-
-interface GroupedProducts {
-  [key: string]: Product[];
-}
-
-export default function HomePage() {
-  const router = useRouter();
-  const { colorScheme } = useTheme();
-  const [groupedProducts, setGroupedProducts] = useState<GroupedProducts>({});
-  const [categories, setCategories] = useState<Category[]>([]); // Changed to Category[]
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const fetchHomeData = async () => {
-    try {
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*');
-
-      if (categoriesError) {
-        console.error('Error fetching categories:', JSON.stringify(categoriesError, null, 2));
-      }
-      setCategories(categoriesData || []);
-
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*');
-
-      if (productsError) {
-        console.error('Error fetching products:', JSON.stringify(productsError, null, 2));
-      }
-
-      const grouped = (productsData || []).reduce((acc: GroupedProducts, product: Product) => {
-        const categoryName = categoriesData?.find(cat => cat.id === product.category_id)?.name || 'Uncategorized';
-        if (!acc[categoryName]) {
-          acc[categoryName] = [];
-        }
-        acc[categoryName].push(product);
-        return acc;
-      }, {});
-      setGroupedProducts(grouped);
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    setLoading(true);
-    fetchHomeData();
-  }, []);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchHomeData();
-    setRefreshing(false);
-  }, []);
-
-  const renderProductSkeletons = () => (
-    <View style={styles.productsGrid}>
-      {[...Array(4)].map((_, index) => <ProductCardSkeleton key={index} />)}
-=======
 import { View, Text, Button } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
@@ -89,7 +14,6 @@ export default function HomePage() {
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text>Welcome!</Text>
       <Button title="Logout" onPress={handleLogout} />
->>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
     </View>
   );
 
@@ -190,7 +114,6 @@ export default function HomePage() {
   </ScrollView>
 );
 }
-<<<<<<< HEAD
 
 const { width } = Dimensions.get('window');
 const productGridItemWidth = (width - 60) / 2; // (Total width - padding - gap) / 2
@@ -322,5 +245,3 @@ const styles = StyleSheet.create({
     gap: 10,
   },
 });
-=======
->>>>>>> parent of 4e60c46 (one step forward 20 steps nack)

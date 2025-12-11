@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
@@ -151,7 +150,6 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
   }
 });
-=======
 import { View, Text } from 'react-native';
 
 export default function ProfilePage() {
@@ -161,4 +159,3 @@ export default function ProfilePage() {
     </View>
   );
 }
->>>>>>> parent of 4e60c46 (one step forward 20 steps nack)
