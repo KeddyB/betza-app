@@ -1,19 +1,24 @@
-import { useTheme } from '@/hooks/use-color-scheme';
-import { supabase } from '@/lib/supabase';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { Colors } from '@/constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { colorScheme } = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const canGoBack = router.canGoBack();
-  const themeColors = Colors[colorScheme ?? 'light'];
+
+  const colors = {
+    background: isDark ? '#1a1a1a' : '#ffffff',
+    text: isDark ? '#ffffff' : '#000000',
+    textSecondary: isDark ? '#999999' : '#666666',
+    border: isDark ? '#333333' : '#e0e0e0',
+    primary: '#007AFF',
+    input: isDark ? '#2a2a2a' : '#f5f5f5',
+  };
 
   const handleSignIn = async () => {
     if (!email.trim() || !password.trim()) {
@@ -23,94 +28,92 @@ export default function SignInScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        Alert.alert('Error', error.message);
-      }
-    } catch (e) {
-      Alert.alert('Error', 'An unexpected error occurred.');
+      // TODO: Implement actual sign in logic here
+      // This would typically call your backend API
+      Alert.alert('Success', 'Signed in! (Demo - not connected to backend)');
+      // router.push('/(tabs)');
+    } catch {
+      Alert.alert('Error', 'Failed to sign in');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} disabled={!canGoBack}>
-              <Text style={[styles.backButton, { color: canGoBack ? themeColors.primary : themeColors.text + '99' }]}>← Back</Text>
-            </TouchableOpacity>
-            <Text style={[styles.title, { color: themeColors.text }]}>Sign In</Text>
-            <Text style={[styles.subtitle, { color: themeColors.text + '99' }]}>
-              Sign in to your account
-            </Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={[styles.backButton, { color: colors.primary }]}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Sign In</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Sign in to your account
+          </Text>
+        </View>
+
+        {/* Form */}
+        <View style={styles.form}>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: colors.text }]}>Email Address</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+              placeholder="Enter your email"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+              editable={!loading}
+            />
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: themeColors.text }]}>Email Address</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
-                placeholder="Enter your email"
-                placeholderTextColor={themeColors.text + '99'}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                editable={!loading}
-              />
+          {/* Password Input */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: colors.text }]}>Password</Text>
+              <TouchableOpacity onPress={() => router.push('./forgot-password')}>
+                <Text style={[styles.forgotLink, { color: colors.primary }]}>Forgot?</Text>
+              </TouchableOpacity>
             </View>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.input, color: colors.text, borderColor: colors.border }]}
+              placeholder="Enter your password"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              editable={!loading}
+            />
+          </View>
 
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={[styles.label, { color: themeColors.text }]}>Password</Text>
-                <TouchableOpacity onPress={() => router.push('/auth/forgot-password')}>
-                  <Text style={[styles.forgotLink, { color: themeColors.primary }]}>Forgot?</Text>
-                </TouchableOpacity>
-              </View>
-              <TextInput
-                style={[styles.input, { backgroundColor: themeColors.card, color: themeColors.text, borderColor: themeColors.border }]}
-                placeholder="Enter your password"
-                placeholderTextColor={themeColors.text + '99'}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-                editable={!loading}
-              />
-            </View>
+          {/* Sign In Button */}
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 }]}
+            onPress={handleSignIn}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {loading ? 'Signing In...' : 'Sign In'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: themeColors.primary, opacity: loading ? 0.6 : 1 }]}
-              onPress={handleSignIn}
-              disabled={loading}
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
+            Do not have an account?{' '}
+            <Text
+              style={[styles.link, { color: colors.primary }]}
+              onPress={() => router.push('./sign-up')}
             >
-              <Text style={styles.buttonText}>
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={[styles.footerText, { color: themeColors.text + '99' }]}>
-              Do not have an account?{' '}
-              <Text
-                style={[styles.link, { color: themeColors.primary }]}
-                onPress={() => router.push('/auth/sign-up')}
-              >
-                Sign up
-              </Text>
+              Sign up
             </Text>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flexGrow: 1,
+    flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'space-between',
     paddingVertical: 20,

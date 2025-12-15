@@ -1,23 +1,29 @@
-import { useTheme } from '@/hooks/use-color-scheme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors } from '@/constants/theme';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SignUpScreen() {
   const router = useRouter();
-  const { colorScheme } = useTheme();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
-  const themeColors = Colors[colorScheme ?? 'light'];
+
+  const colors = {
+    background: isDark ? '#1a1a1a' : '#ffffff',
+    text: isDark ? '#ffffff' : '#000000',
+    textSecondary: isDark ? '#999999' : '#666666',
+    primary: '#007AFF',
+    input: isDark ? '#2a2a2a' : '#f5f5f5',
+    inputBorder: isDark ? '#333333' : '#e0e0e0',
+  };
 
   const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword || !fullName) {
+    if (!email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -32,18 +38,13 @@ export default function SignUpScreen() {
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-        },
       });
 
       if (error) {
         Alert.alert('Sign Up Error', error.message);
       } else {
         Alert.alert('Success', 'Account created! Please check your email to verify your account.');
-        router.push('/auth/sign-in');
+        router.push('/auth/get-started');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to create account');
@@ -57,84 +58,48 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBack}>
-            <Text style={[styles.backButton, { color: themeColors.primary }]}>← Back</Text>
+            <Text style={[styles.backButton, { color: colors.primary }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={[styles.title, { color: themeColors.text }]}>Create Account</Text>
-          <Text style={[styles.subtitle, { color: themeColors.text + '99' }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Sign up to get started
           </Text>
         </View>
 
         <View style={styles.form}>
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: themeColors.card,
-                borderColor: themeColors.border,
-                color: themeColors.text,
-              },
-            ]}
-            placeholder="Full Name"
-            placeholderTextColor={themeColors.text + '99'}
-            value={fullName}
-            onChangeText={setFullName}
-            editable={!loading}
-          />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: themeColors.card,
-                borderColor: themeColors.border,
-                color: themeColors.text,
-              },
-            ]}
+            style={[styles.input, { backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text }]}
             placeholder="Email"
-            placeholderTextColor={themeColors.text + '99'}
+            placeholderTextColor={colors.textSecondary}
             value={email}
             onChangeText={setEmail}
             editable={!loading}
             keyboardType="email-address"
           />
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: themeColors.card,
-                borderColor: themeColors.border,
-                color: themeColors.text,
-              },
-            ]}
+            style={[styles.input, { backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text }]}
             placeholder="Password"
-            placeholderTextColor={themeColors.text + '99'}
+            placeholderTextColor={colors.textSecondary}
             value={password}
             onChangeText={setPassword}
             editable={!loading}
             secureTextEntry
           />
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: themeColors.card,
-                borderColor: themeColors.border,
-                color: themeColors.text,
-              },
-            ]}
+            style={[styles.input, { backgroundColor: colors.input, borderColor: colors.inputBorder, color: colors.text }]}
             placeholder="Confirm Password"
-            placeholderTextColor={themeColors.text + '99'}
+            placeholderTextColor={colors.textSecondary}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             editable={!loading}
             secureTextEntry
           />
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: themeColors.primary, opacity: loading ? 0.6 : 1 }]}
+            style={[styles.button, { backgroundColor: colors.primary, opacity: loading ? 0.6 : 1 }]}
             onPress={handleSignUp}
             disabled={loading}
           >

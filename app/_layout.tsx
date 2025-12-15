@@ -1,70 +1,84 @@
+import { CartProvider } from './context/CartContext';
+import { ToastProvider } from './context/ToastContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
-  initialRouteName: 'index',
+  anchor: '(tabs)',
 };
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { colorScheme } = useTheme(); // Use the new useTheme hook
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return; // Wait until the auth state is known.
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    const inAuthGroup = segments[0] === 'auth';
+    checkAuth();
 
-    // If the user has a session and is on an auth screen, move them to the main app.
-    if (session && inAuthGroup) {
-      router.replace('/(tabs)/index');
-    }
-    // If the user does not have a session and is not on an auth screen, move them to the auth flow.
-    else if (!session && !inAuthGroup) {
-      router.replace('/auth/get-started');
-    }
+    // Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session?.user);
+    });
 
-  }, [session, loading, segments]);
+    // Setup deep linking for OAuth
+    const unsubscribeDeepLink = setupDeepLinking();
 
-  // Render a loading indicator while the auth state is being determined.
-  if (loading) {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" />
-        </View>
-    );
+    return () => {
+      subscription?.unsubscribe();
+      unsubscribeDeepLink();
+    };
+  }, []);
+
+  if (isLoading) {
+    return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        {isAuthenticated ? (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen
-              name="auth"
-              options={{ headerShown: false }}
-              redirect={false}
-              initialRouteName="get-started"
-            />
-          </>
-        )}
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <ToastProvider>
+      <CartProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            {isAuthenticated ? (
+              <>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+              </>
+            ) : (
+              <>
+                <Stack.Screen
+                  name="auth"
+                  options={{ headerShown: false }}
+                  redirect={false}
+                  initialRouteName="get-started"
+                />
+              </>
+            )}
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </CartProvider>
+    </ToastProvider>
   );
 }
