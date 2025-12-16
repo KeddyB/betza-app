@@ -34,12 +34,7 @@ export default function SkeletonLoader() {
     outputRange: [0.3, 0.7],
   });
 
-  const animatedStyle = {
-    backgroundColor: animatedValue.interpolate({
-      inputRange: [0, 1],
-      outputRange: [Colors[colorScheme ?? 'light'].card, Colors[colorScheme ?? 'light'].card + '80'],
-    }),
-  };
+
 
   const itemColor = Colors[colorScheme ?? 'light'].text + '20'; // A lighter shade of text color for skeleton items
 

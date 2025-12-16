@@ -29,18 +29,18 @@ export default function SignInEmailScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        Alert.alert('Sign In Error', error.message);
+      if (signInError) {
+        Alert.alert('Sign In Error', signInError.message);
       } else {
         router.replace('/(tabs)');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to sign in');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to sign in');
     } finally {
       setLoading(false);
     }

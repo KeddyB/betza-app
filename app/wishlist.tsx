@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -6,7 +6,7 @@ export default function WishlistScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>My Wishlist</Text>
-      <Text>This is where the user's wishlist will be displayed.</Text>
+      <Text>This is where the user&apos;s wishlist will be displayed.</Text>
     </SafeAreaView>
   );
 }

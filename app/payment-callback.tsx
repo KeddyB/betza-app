@@ -42,7 +42,7 @@ export default function PaymentCallbackScreen() {
     };
 
     verifyPayment();
-  }, [reference]);
+  }, [reference, clearCart, router]);
 
   return (
     <View style={[styles.container, { backgroundColor: themeColors.background }]}>

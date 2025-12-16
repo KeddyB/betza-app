@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -6,7 +6,7 @@ export default function OrdersScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>My Orders</Text>
-      <Text>This is where the user's order history will be displayed.</Text>
+      <Text>This is where the user&apos;s order history will be displayed.</Text>
     </SafeAreaView>
   );
 }

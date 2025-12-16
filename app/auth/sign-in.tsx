@@ -30,7 +30,7 @@ export default function SignInScreen() {
       if (error) {
         Alert.alert('Error', error.message);
       }
-    } catch (e) {
+    } catch {
       Alert.alert('Error', 'An unexpected error occurred.');
     } finally {
       setLoading(false);

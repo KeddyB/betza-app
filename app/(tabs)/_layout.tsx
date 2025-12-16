@@ -1,10 +1,10 @@
 import { Tabs, useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
+import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { View, TextInput, StyleSheet, Text } from 'react-native'; // Import TouchableOpacity
-import { useState } from 'react';
-import { useCart } from '../context/CartContext';
+import { View, TextInput, StyleSheet, Text } from 'react-native';
+import { useState, useMemo } from 'react';
+import { useCart } from '@/app/context/CartContext';
 
 function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | undefined }) {
   const router = useRouter();
@@ -32,8 +32,16 @@ function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | und
   );
 }
 
+const CustomHeader = ({ colorScheme }: { colorScheme: 'light' | 'dark' | null | undefined }) => {
+  return useMemo(() => (
+    <View style={[styles.customHeader, { backgroundColor: Colors[colorScheme ?? 'light'].background, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
+      <SearchBar colorScheme={colorScheme} />
+    </View>
+  ), [colorScheme]);
+};
+
 export default function TabLayout() {
-  const { colorScheme } = useTheme(); 
+  const { colorScheme } = useTheme();
   const { cart } = useCart();
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -51,18 +59,14 @@ export default function TabLayout() {
         options={{
           headerShown: true,
           tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
-          header: () => (
-            <View style={[styles.customHeader, { backgroundColor: Colors[colorScheme ?? 'light'].background, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
-              <SearchBar colorScheme={colorScheme} />
-            </View>
-          ),
+          header: () => <CustomHeader colorScheme={colorScheme} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
-          headerShown: false, // Set to false
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <View style={{ width: 24, height: 24, margin: 5 }}>
               <MaterialIcons name="shopping-cart" size={24} color={color} />
@@ -79,7 +83,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          headerShown: false, // Set to false
+          headerShown: false,
           tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
         }}
       />
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   customHeader: {
-    paddingTop: 50, // Adjust based on status bar height for iOS/Android
+    paddingTop: 50,
     paddingBottom: 10,
     borderBottomWidth: 1,
   },

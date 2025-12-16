@@ -1,16 +1,44 @@
-import { CartProvider } from './context/CartContext';
-import { ToastProvider } from './context/ToastContext';
+import { AuthProvider } from '@/app/context/AuthContext';
+import { CartProvider } from '@/app/context/CartContext';
+import { ToastProvider } from '@/app/context/ToastContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
+import { Colors } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
+};
+
+const CustomDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: Colors.dark.background,
+    card: Colors.dark.card,
+    notification: Colors.dark.notification,
+    primary: Colors.dark.primary,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+  },
+};
+
+const CustomDefaultTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: Colors.light.background,
+    card: Colors.light.card,
+    notification: Colors.light.notification,
+    primary: Colors.light.primary,
+    text: Colors.light.text,
+    border: Colors.light.border,
+  },
 };
 
 function RootLayoutNav() {
@@ -55,14 +83,14 @@ function RootLayoutNav() {
     if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)');
     }
-  }, [isLoading, isAuthenticated, segments]);
+  }, [isLoading, isAuthenticated, segments, router]);
 
   if (isLoading) {
-    return null; 
+    return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === 'dark' ? CustomDarkTheme : CustomDefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
@@ -74,11 +102,13 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <ToastProvider>
-      <CartProvider>
-        <RootLayoutNav />
-        <StatusBar style="auto" />
-      </CartProvider>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <CartProvider>
+          <RootLayoutNav />
+        </CartProvider>
+      </ToastProvider>
+      <StatusBar style="auto" />
+    </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/use-color-scheme';
@@ -11,28 +11,38 @@ interface ToastProps {
 }
 
 export const Toast = ({ message, type, position = 'bottom' }: ToastProps) => {
-  let iconName: keyof typeof Ionicons.glyphMap;
-  let backgroundColor: string;
   const { colorScheme } = useTheme();
 
-  switch (type) {
-    case 'success':
-      iconName = 'checkmark-circle';
-      backgroundColor = Colors[colorScheme ?? 'light'].primary;
-      break;
-    case 'error':
-      iconName = 'close-circle';
-      backgroundColor = Colors[colorScheme ?? 'light'].notification;
-      break;
-    case 'info':
-    default:
-      iconName = 'information-circle';
-      backgroundColor = Colors[colorScheme ?? 'light'].link;
-      break;
-  }
+  const { toastStyle, iconName } = useMemo(() => {
+    let iconName: keyof typeof Ionicons.glyphMap;
+    let backgroundColor: string;
+
+    switch (type) {
+      case 'success':
+        iconName = 'checkmark-circle';
+        backgroundColor = Colors[colorScheme ?? 'light'].primary;
+        break;
+      case 'error':
+        iconName = 'close-circle';
+        backgroundColor = Colors[colorScheme ?? 'light'].notification;
+        break;
+      case 'info':
+      default:
+        iconName = 'information-circle';
+        backgroundColor = Colors[colorScheme ?? 'light'].link;
+        break;
+    }
+
+    const toastStyle = {
+      backgroundColor,
+      [position]: 50,
+    };
+    
+    return { toastStyle, iconName };
+  }, [type, colorScheme, position]);
 
   return (
-    <View style={[styles.container, { backgroundColor, [position]: 50 }]}>
+    <View style={[styles.container, toastStyle]}>
       <Ionicons name={iconName} size={20} color="#fff" style={styles.icon} />
       <Text style={styles.message}>{message}</Text>
     </View>
