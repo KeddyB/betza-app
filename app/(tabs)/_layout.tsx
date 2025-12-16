@@ -1,8 +1,8 @@
 import { Tabs, useRouter } from 'expo-router';
-import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { View, TextInput, StyleSheet, Text, Pressable } from 'react-native'; // Import TouchableOpacity
+import { View, TextInput, StyleSheet, Text, Pressable } from 'react-native';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 
@@ -33,9 +33,12 @@ function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | und
 }
 
 export default function TabLayout() {
-  const { colorScheme, toggleTheme } = useTheme(); // Use the new useTheme hook
+  const colorScheme = useColorScheme();
   const { cart } = useCart();
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // A do-nothing function to prevent crashes. The original toggleTheme was removed.
+  const toggleTheme = () => {};
 
   return (
     <Tabs

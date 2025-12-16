@@ -8,7 +8,6 @@ interface WishlistContextType {
   addToWishlist: (product: Product) => void;
   removeFromWishlist: (productId: string) => void;
   isProductInWishlist: (productId: string) => boolean;
-  loading: boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
@@ -27,14 +26,10 @@ interface WishlistProviderProps {
 
 export const WishlistProvider = ({ children }: WishlistProviderProps) => {
   const [wishlist, setWishlist] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   const fetchWishlist = useCallback(async () => {
-    if (!user) {
-        setLoading(false);
-        return;
-    }
+    if (!user) return;
     try {
       const { data, error } = await supabase
         .from('wishlist')
@@ -45,13 +40,13 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
       setWishlist(wishlistItems);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
-    } finally {
-        setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchWishlist();
+    if (user) {
+      fetchWishlist();
+    }
   }, [user, fetchWishlist]);
 
   const addToWishlist = async (product: Product) => {
@@ -87,7 +82,7 @@ export const WishlistProvider = ({ children }: WishlistProviderProps) => {
   };
 
   return (
-    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isProductInWishlist, loading }}>
+    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isProductInWishlist }}>
       {children}
     </WishlistContext.Provider>
   );

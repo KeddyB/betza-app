@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useTheme } from '@/hooks/use-color-scheme'; // Updated import
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
@@ -14,7 +14,7 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  const { colorScheme } = useTheme(); // Use the new useTheme hook
+  const colorScheme = useColorScheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
