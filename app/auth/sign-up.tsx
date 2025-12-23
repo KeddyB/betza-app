@@ -35,19 +35,19 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) {
-        Alert.alert('Sign Up Error', error.message);
+      if (signUpError) {
+        Alert.alert('Sign Up Error', signUpError.message);
       } else {
         Alert.alert('Success', 'Account created! Please check your email to verify your account.');
         router.push('/auth/get-started');
       }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create account');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }

@@ -1,20 +1,48 @@
-import { CartProvider } from './context/CartContext';
-import { ToastProvider } from './context/ToastContext';
+import { AuthProvider } from '@/app/context/AuthContext';
+import { CartProvider } from '@/app/context/CartContext';
+import { ToastProvider } from '@/app/context/ToastContext';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-color-scheme';
 import { setupDeepLinking, supabase } from '@/lib/supabase';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+const CustomDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: Colors.dark.background,
+    card: Colors.dark.card,
+    notification: Colors.dark.notification,
+    primary: Colors.dark.primary,
+    text: Colors.dark.text,
+    border: Colors.dark.border,
+  },
+};
+
+const CustomDefaultTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: Colors.light.background,
+    card: Colors.light.card,
+    notification: Colors.light.notification,
+    primary: Colors.light.primary,
+    text: Colors.light.text,
+    border: Colors.light.border,
+  },
+};
+
+function RootLayoutNav() {
+  const { colorScheme } = useTheme();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,38 +75,40 @@ export default function RootLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === 'auth';
+
+    if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoading, isAuthenticated, segments, router]);
+
   if (isLoading) {
     return null;
   }
 
   return (
-    <ToastProvider>
-      <CartProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            {isAuthenticated ? (
-              <>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-              </>
-            ) : (
-              <>
-                <Stack.Screen
-                  name="auth"
-                  options={{ headerShown: false }}
-                  redirect={false}
-                  initialRouteName="get-started"
-                />
-              </>
-            )}
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </CartProvider>
-    </ToastProvider>
+    <ThemeProvider value={colorScheme === 'dark' ? CustomDarkTheme : CustomDefaultTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <CartProvider>
+          <RootLayoutNav />
+        </CartProvider>
+      </ToastProvider>
+      <StatusBar style="auto" />
+    </AuthProvider>
   );
 }

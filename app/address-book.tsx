@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 import { View, Text, StyleSheet, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './context/AuthContext';
+=======
+import { Text, StyleSheet } from 'react-native';
+import React from 'react';
+>>>>>>> test-fix
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AddressSkeleton from '@/components/AddressSkeleton';
 
@@ -77,6 +82,7 @@ export default function AddressBookScreen() {
   };
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <Text style={[styles.title, { color: themeColors.text }]}>Address Book</Text>
 
@@ -121,6 +127,11 @@ export default function AddressBookScreen() {
           </Pressable>
         </View>
       )}
+=======
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Address Book</Text>
+      <Text>This is where the user&apos;s addresses will be displayed.</Text>
+>>>>>>> test-fix
     </SafeAreaView>
   );
 }

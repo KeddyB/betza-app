@@ -27,7 +27,7 @@ export default function AccountManagementScreen() {
     if (!user) return;
 
     setLoading(true);
-    const { data, error } = await supabase.auth.updateUser({
+    const { error } = await supabase.auth.updateUser({
       data: { full_name: fullName },
     });
 

@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { useState, useEffect } from 'react';
+=======
+import { Text, StyleSheet } from 'react-native';
+import React from 'react';
+>>>>>>> test-fix
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
@@ -41,6 +46,7 @@ export default function OrdersScreen() {
   }, [user]);
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <Text style={[styles.title, { color: themeColors.text }]}>My Orders</Text>
       {loading ? (
@@ -74,6 +80,11 @@ export default function OrdersScreen() {
           )}
         />
       )}
+=======
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>My Orders</Text>
+      <Text>This is where the user&apos;s order history will be displayed.</Text>
+>>>>>>> test-fix
     </SafeAreaView>
   );
 }

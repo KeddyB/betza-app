@@ -34,7 +34,7 @@ export default function GetStartedScreen() {
 
     const subscription = Linking.addEventListener('url', handleDeepLink);
     return () => subscription.remove();
-  }, []);
+  }, [exchangeCodeForSession]);
 
   const exchangeCodeForSession = async (code: string) => {
     try {

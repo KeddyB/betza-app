@@ -1,11 +1,30 @@
+<<<<<<< HEAD
 import { useRef, useEffect } from 'react';
 import { Animated, StyleSheet, Text, View, useColorScheme } from 'react-native';
+=======
+import { useTheme } from '@/hooks/use-color-scheme';
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> test-fix
 
 // This is the initial splash screen.
 // The actual routing is handled by the RootLayout in app/_layout.tsx
 export default function SplashScreen() {
+<<<<<<< HEAD
   const colorScheme = useColorScheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+=======
+  const router = useRouter();
+  const { colorScheme } = useTheme();
+  const isDark = colorScheme === 'dark';
+
+  const colors = {
+    background: isDark ? '#1a1a1a' : '#ffffff',
+    text: isDark ? '#ffffff' : '#000000',
+  };
+>>>>>>> test-fix
 
   useEffect(() => {
     Animated.timing(fadeAnim, {

@@ -28,12 +28,24 @@ export default function SignInScreen() {
 
     setLoading(true);
     try {
+<<<<<<< HEAD
       // TODO: Implement actual sign in logic here
       // This would typically call your backend API
       Alert.alert('Success', 'Signed in! (Demo - not connected to backend)');
       // router.push('/(tabs)');
     } catch {
       Alert.alert('Error', 'Failed to sign in');
+=======
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        Alert.alert('Error', error.message);
+      }
+    } catch {
+      Alert.alert('Error', 'An unexpected error occurred.');
+>>>>>>> test-fix
     } finally {
       setLoading(false);
     }

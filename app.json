@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "betza",
+    "scheme": "testfix",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -19,7 +19,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.betzaapp"
+      "package": "com.keddyb.betzaapp"
     },
     "web": {
       "output": "static",
@@ -38,9 +38,7 @@
             "backgroundColor": "#000000"
           }
         }
-      ],
-      "expo-secure-store",
-      "expo-web-browser"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -51,6 +49,12 @@
       "eas": {
         "projectId": "a435511f-c5e0-4946-8ed0-098699a5ac19"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a435511f-c5e0-4946-8ed0-098699a5ac19"
     }
   }
 }

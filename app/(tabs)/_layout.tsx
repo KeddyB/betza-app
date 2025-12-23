@@ -1,10 +1,19 @@
 import { Tabs, useRouter } from 'expo-router';
+<<<<<<< HEAD
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { View, TextInput, StyleSheet, Text, Pressable } from 'react-native';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
+=======
+import { useTheme } from '@/hooks/use-color-scheme';
+import { Colors } from '@/constants/theme';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { View, TextInput, StyleSheet, Text } from 'react-native';
+import { useState, useMemo } from 'react';
+import { useCart } from '@/app/context/CartContext';
+>>>>>>> test-fix
 
 function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | undefined }) {
   const router = useRouter();
@@ -32,8 +41,20 @@ function SearchBar({ colorScheme }: { colorScheme: 'light' | 'dark' | null | und
   );
 }
 
+const CustomHeader = ({ colorScheme }: { colorScheme: 'light' | 'dark' | null | undefined }) => {
+  return useMemo(() => (
+    <View style={[styles.customHeader, { backgroundColor: Colors[colorScheme ?? 'light'].background, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
+      <SearchBar colorScheme={colorScheme} />
+    </View>
+  ), [colorScheme]);
+};
+
 export default function TabLayout() {
+<<<<<<< HEAD
   const colorScheme = useColorScheme();
+=======
+  const { colorScheme } = useTheme();
+>>>>>>> test-fix
   const { cart } = useCart();
   const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -54,6 +75,7 @@ export default function TabLayout() {
         options={{
           headerShown: true,
           tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
+<<<<<<< HEAD
           header: () => (
             <View style={[styles.customHeader, { backgroundColor: Colors[colorScheme ?? 'light'].background, borderBottomColor: Colors[colorScheme ?? 'light'].border }]}>
               <View style={styles.headerTopRow}>
@@ -68,13 +90,16 @@ export default function TabLayout() {
               <SearchBar colorScheme={colorScheme} />
             </View>
           ),
+=======
+          header: () => <CustomHeader colorScheme={colorScheme} />,
+>>>>>>> test-fix
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
-          headerShown: false, // Set to false
+          headerShown: false,
           tabBarIcon: ({ color }) => (
             <View style={{ width: 24, height: 24, margin: 5 }}>
               <MaterialIcons name="shopping-cart" size={24} color={color} />
@@ -91,7 +116,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          headerShown: false, // Set to false
+          headerShown: false,
           tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
         }}
       />
@@ -134,8 +159,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   customHeader: {
+<<<<<<< HEAD
     paddingTop: 50, // Adjust based on status bar height for iOS/Android
     paddingHorizontal: 15,
+=======
+    paddingTop: 50,
+>>>>>>> test-fix
     paddingBottom: 10,
     borderBottomWidth: 1,
   },

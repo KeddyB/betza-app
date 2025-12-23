@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Image, ScrollView, Pressable, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/lib/types';
 import { useTheme } from '@/hooks/use-color-scheme';
@@ -8,93 +8,180 @@ import { Colors } from '@/constants/theme';
 import { useCart } from '@/app/context/CartContext';
 import { useToast } from '@/app/context/ToastContext';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProductCard from '@/components/ProductCard';
+
+const { height, width } = Dimensions.get('window');
+
+const ProductDetailSkeleton = () => {
+  const { colorScheme } = useTheme();
+  const themeColors = Colors[colorScheme ?? 'light'];
+
+  return (
+    <View style={styles.flex}>
+      <View style={[styles.skeletonImage, { backgroundColor: themeColors.card }]} />
+      <View style={[styles.detailsContainer, { backgroundColor: themeColors.background }]}>
+        <View style={[styles.skeletonText, { height: 30, width: '70%', backgroundColor: themeColors.card }]} />
+        <View style={[styles.skeletonText, { height: 20, width: '40%', marginTop: 12, backgroundColor: themeColors.card }]} />
+        <View style={[styles.skeletonText, { height: 80, marginTop: 24, backgroundColor: themeColors.card }]} />
+        <View style={[styles.skeletonText, { height: 20, width: '50%', marginTop: 24, backgroundColor: themeColors.card }]} />
+        <View style={styles.skeletonSimilarProducts} >
+            <View style={[styles.skeletonProductCard, {backgroundColor: themeColors.card}]}></View>
+            <View style={[styles.skeletonProductCard, {backgroundColor: themeColors.card}]}></View>
+        </View>
+      </View>
+      <View style={[styles.bottomBar, { backgroundColor: themeColors.background, borderTopColor: themeColors.border }]}>
+        <View style={[styles.skeletonButton, { width: 120, backgroundColor: themeColors.card }]}/>
+        <View style={[styles.skeletonButton, { flex: 1, marginLeft: 16, backgroundColor: themeColors.card }]}/>
+      </View>
+    </View>
+  );
+};
 
 function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const [product, setProduct] = useState<Product | null>(null);
+  const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [loadingWishlist, setLoadingWishlist] = useState(true);
+  
   const router = useRouter();
   const { colorScheme } = useTheme();
-  const { cart, addToCart } = useCart();
+  const themeColors = Colors[colorScheme ?? 'light'];
+  const { cart, addToCart, updateCartQuantity } = useCart();
   const { showToast } = useToast();
-  const [addingToCart, setAddingToCart] = useState(false);
-  const [activeTab, setActiveTab] = useState<'Description' | 'Review'>('Description');
 
-  // Get current quantity from cart
-  const currentQuantity = cart.find(item => item.id === product?.id)?.quantity || 1; // Default to 1 for selection
-  const [quantity, setQuantity] = useState(currentQuantity);
+  const [quantity, setQuantity] = useState(1);
 
-  useEffect(() => {
-    // If item is in cart, sync quantity. If not, default to 1 for the selector.
-    const inCartQty = cart.find(item => item.id === product?.id)?.quantity;
-    if (inCartQty) {
-        setQuantity(inCartQty);
+  const fetchProductData = useCallback(async (productId: string) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', productId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching product details:', error);
+      return null;
+    } else {
+      return data;
     }
-  }, [cart, product]);
+  }, []);
+
+  const fetchSimilarProducts = useCallback(async (categoryId: number, productId: number) => {
+    if (!categoryId) return;
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('category_id', categoryId)
+      .neq('id', productId)
+      .limit(6);
+
+    if (!error) {
+        setSimilarProducts(data);
+    }
+  }, []);
+
+  const fetchWishlistStatus = useCallback(async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setLoadingWishlist(false);
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('wishlist')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('product_id', productId)
+      .single();
+
+    setIsInWishlist(!!data && !error);
+    setLoadingWishlist(false);
+  }, []);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
+    const loadData = async () => {
+        if (typeof id !== 'string') return;
+        setLoading(true);
+        
+        const productData = await fetchProductData(id);
+        setProduct(productData);
 
-      if (error) {
-        console.error('Error fetching product details:', error);
-      } else {
-        setProduct(data);
-      }
-      setLoading(false);
+        if (productData) {
+            const cartItem = cart.find(item => item.id === productData.id);
+            setQuantity(cartItem ? cartItem.quantity : 1);
+            fetchSimilarProducts(productData.category_id, productData.id);
+        }
+
+        fetchWishlistStatus(id);
+        setLoading(false);
     };
+    
+    loadData();
+  }, [id, cart, fetchProductData, fetchSimilarProducts, fetchWishlistStatus]);
 
-    fetchProduct();
-  }, [id]);
+  const handleWishlistToggle = async () => {
+    if (!product) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      showToast('Please log in to manage your wishlist.', 'error');
+      return;
+    }
+
+    setLoadingWishlist(true);
+    if (isInWishlist) {
+      const { error } = await supabase.from('wishlist').delete().match({ user_id: user.id, product_id: product.id });
+      if (!error) {
+        setIsInWishlist(false);
+        showToast('Removed from wishlist.', 'info');
+      } else {
+        showToast('Failed to remove from wishlist.', 'error');
+      }
+    } else {
+      const { error } = await supabase.from('wishlist').insert({ user_id: user.id, product_id: product.id });
+      if (!error) {
+        setIsInWishlist(true);
+        showToast('Added to wishlist!', 'success');
+      } else {
+        showToast('Failed to add to wishlist.', 'error');
+      }
+    }
+    setLoadingWishlist(false);
+  };
 
   const handleAddToCart = () => {
-    if (product) {
-      setAddingToCart(true);
-      setTimeout(() => {
-        addToCart(product, quantity); // Add current selected quantity
-        showToast(`${product.name} added to cart!`, 'success');
-        setAddingToCart(false);
-      }, 300);
-    }
+      if (!product) return;
+      const cartItem = cart.find(item => item.id === product.id);
+      if (cartItem) {
+          updateCartQuantity(product.id, cartItem.quantity + quantity);
+      } else {
+          addToCart(product, quantity);
+      }
+      showToast('Added to cart!', 'success');
   };
 
-  const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
 
   if (loading) {
-    return (
-      <View style={[styles.loaderContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-      </View>
-    );
+    return <ProductDetailSkeleton />;
   }
 
   if (!product) {
     return (
-      <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
-        <Text style={{ color: Colors[colorScheme ?? 'light'].text }}>Product not found.</Text>
-      </View>
+      <SafeAreaView style={[styles.flex, { backgroundColor: themeColors.background }]}>
+        <View style={styles.centeredContainer}>
+          <Text style={{ color: themeColors.text }}>Product not found.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
-  // Mock data
-  const rating = product.rating || 4.8;
-  const reviewCount = product.review_count || 198;
-
   return (
+<<<<<<< HEAD
     <View style={[styles.container, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         {/* Custom Header */}
         <View style={styles.header}>
@@ -184,56 +271,116 @@ function ProductDetailScreen() {
           </TouchableOpacity>
       </View>
     </View>
+=======
+    <SafeAreaView style={[styles.flex, { backgroundColor: themeColors.background }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={[styles.iconButton, { backgroundColor: themeColors.card + '80' }]}>
+                    <Ionicons name="arrow-back" size={24} color={themeColors.text} />
+                </TouchableOpacity>
+                 <TouchableOpacity onPress={handleWishlistToggle} disabled={loadingWishlist} style={[styles.iconButton, { backgroundColor: themeColors.card + '80' }]}>
+                    <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={24} color={isInWishlist ? themeColors.primary : themeColors.text} />
+                </TouchableOpacity>
+            </View>
+
+            <View style={[styles.imageContainer, { backgroundColor: themeColors.card }]}>
+              <Image source={{ uri: product.image_url }} style={styles.image} resizeMode="contain" />
+            </View>
+
+            <View style={[styles.detailsContainer, { backgroundColor: themeColors.background }]}>
+                <Text style={[styles.name, { color: themeColors.text }]}>{product.name}</Text>
+                
+                <View style={styles.row}>
+                    <Text style={[styles.price, { color: themeColors.primary }]}>₦{product.price.toFixed(2)}</Text>
+                    <View style={styles.ratingRow}>
+                        <Ionicons name="star" size={16} color="#FFC107" />
+                        <Text style={[styles.ratingText, { color: themeColors.text }]}> {product.rating || 4.8} ({product.review_count || 198} Reviews)</Text>
+                    </View>
+                </View>
+                
+                <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Description</Text>
+                <Text style={[styles.description, { color: themeColors.text + 'AA' }]}>{product.description || 'No description available.'}</Text>
+
+                {similarProducts.length > 0 && (
+                    <>
+                        <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Similar Products</Text>
+                        <FlatList 
+                            data={similarProducts}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            keyExtractor={(item) => item.id.toString()}
+                            renderItem={({item}) => (
+                                <ProductCard 
+                                    product={item} 
+                                    onPress={() => router.push(`/product/${item.id}`)} 
+                                    width={width / 2.5}
+                                />
+                            )}
+                            ItemSeparatorComponent={() => <View style={{width: 16}}/>}
+                            contentContainerStyle={{ paddingVertical: 16 }}
+                        />
+                    </>
+                )}
+            </View>
+
+        </ScrollView>
+
+        <View style={[styles.bottomBar, { backgroundColor: themeColors.background, borderTopColor: themeColors.border }]}>
+            <View style={styles.quantitySelector}>
+                <TouchableOpacity onPress={decrementQuantity} style={[styles.qtyBtn, { backgroundColor: themeColors.card }]}>
+                    <Ionicons name="remove" size={22} color={themeColors.text} />
+                </TouchableOpacity>
+                <Text style={[styles.qtyText, { color: themeColors.text }]}>{quantity}</Text>
+                <TouchableOpacity onPress={incrementQuantity} style={[styles.qtyBtn, { backgroundColor: themeColors.card }]}>
+                    <Ionicons name="add" size={22} color={themeColors.text} />
+                </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity onPress={handleAddToCart} style={[styles.addToCartButton, { backgroundColor: themeColors.primary }]}>
+                <Ionicons name="cart-outline" size={24} color="#fff" />
+                <Text style={styles.addToCartText}>Add to Cart</Text>
+            </TouchableOpacity>
+        </View>
+    </SafeAreaView>
+>>>>>>> test-fix
   );
 }
 
 export default function ProductDetailPage() {
-  return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
-      <ProductDetailScreen />
-    </>
-  );
+  return <ProductDetailScreen />;
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  flex: { flex: 1 },
+  centeredContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingTop: 50, // Status bar
-      paddingHorizontal: 20,
-      paddingBottom: 10,
-  },
-  headerTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 1,
   },
   iconButton: {
+<<<<<<< HEAD
       padding: 8,
       backgroundColor: '#F3F4F6', // Light gray background for icons
       borderRadius: 12,
   },
   scrollContent: {
       paddingBottom: 100,
+=======
+      padding: 10,
+      borderRadius: 25,
+>>>>>>> test-fix
   },
   imageContainer: {
-    width: '100%',
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    marginTop: 20,
+    // No hardcoded background color
   },
   image: {
+<<<<<<< HEAD
     width: '80%',
     height: '80%',
   },
@@ -243,40 +390,39 @@ const styles = StyleSheet.create({
       backgroundColor: '#FFE4E6', // Light pink
       padding: 8,
       borderRadius: 20,
+=======
+    width: '100%',
+    height: height * 0.5,
+>>>>>>> test-fix
   },
   detailsContainer: {
     padding: 24,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -20, // Overlap slightly if background differs
-  },
-  titleRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      marginBottom: 8,
+    marginTop: -30,
   },
   name: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    flex: 1,
-    marginRight: 16,
+    marginBottom: 8,
   },
-  priceLabel: {
-      fontSize: 12,
-      textAlign: 'right',
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 16,
   },
   price: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   ratingRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 24,
   },
   ratingText: {
       fontSize: 14,
+<<<<<<< HEAD
       marginLeft: 4,
   },
   tabContainer: {
@@ -303,20 +449,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     marginBottom: 24,
+=======
+      marginLeft: 5,
+>>>>>>> test-fix
   },
   sectionTitle: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: 'bold',
-      marginBottom: 12,
+      marginTop: 24,
+      marginBottom: 8,
   },
-  variantContainer: {
-      flexDirection: 'row',
-      gap: 16,
-  },
-  variantCircle: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+  description: {
+    fontSize: 15,
+    lineHeight: 22,
   },
   bottomBar: {
       position: 'absolute',
@@ -324,45 +469,68 @@ const styles = StyleSheet.create({
       left: 0,
       right: 0,
       flexDirection: 'row',
-      padding: 24,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
       alignItems: 'center',
+<<<<<<< HEAD
       justifyContent: 'space-between',
       backgroundColor: '#fff',
+=======
+>>>>>>> test-fix
       borderTopWidth: 1,
       borderTopColor: '#f0f0f0',
   },
   quantitySelector: {
       flexDirection: 'row',
       alignItems: 'center',
-      borderRadius: 16,
-      padding: 6,
-      width: '40%',
-      justifyContent: 'space-between',
   },
   qtyBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      backgroundColor: '#fff',
-      justifyContent: 'center',
-      alignItems: 'center',
+      padding: 8,
+      borderRadius: 8,
   },
   qtyText: {
       fontWeight: 'bold',
-      fontSize: 16,
+      fontSize: 20,
+      marginHorizontal: 16,
   },
   addToCartButton: {
+<<<<<<< HEAD
       backgroundColor: '#FF6B6B',
+=======
+      flex: 1,
+>>>>>>> test-fix
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 16,
       borderRadius: 16,
-      width: '55%',
+      marginLeft: 16,
   },
   addToCartText: {
       color: '#fff',
-      fontSize: 16,
+      fontSize: 18,
       fontWeight: 'bold',
+      marginLeft: 10,
   },
+  // Skeleton Styles
+  skeletonImage: {
+      height: height * 0.5,
+  },
+  skeletonText: {
+      borderRadius: 8,
+  },
+  skeletonButton: {
+      height: 55,
+      borderRadius: 16,
+  },
+  skeletonSimilarProducts: {
+    flexDirection: 'row',
+    marginTop: 16,
+  },
+  skeletonProductCard: {
+      width: width / 2.5,
+      height: 250,
+      borderRadius: 12,
+      marginRight: 16,
+  }
 });

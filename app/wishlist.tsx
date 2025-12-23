@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { View, Text, StyleSheet, FlatList } from 'react-native';
+=======
+import { Text, StyleSheet } from 'react-native';
+>>>>>>> test-fix
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/hooks/use-color-scheme';
@@ -21,6 +25,7 @@ export default function WishlistScreen() {
   );
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <Text style={[styles.title, { color: themeColors.text }]}>My Wishlist</Text>
       {loading ? (
@@ -41,6 +46,11 @@ export default function WishlistScreen() {
           columnWrapperStyle={{ justifyContent: 'space-between' }} // Add this for consistent spacing
         />
       )}
+=======
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>My Wishlist</Text>
+      <Text>This is where the user&apos;s wishlist will be displayed.</Text>
+>>>>>>> test-fix
     </SafeAreaView>
   );
 }

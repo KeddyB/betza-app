@@ -4,15 +4,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ede9ba4-ab28-4e41-96cb-9a6a0790bf7f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/(tabs)/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/sign-up-google.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/sign-up-google.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/context/AuthContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/context/AuthContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/context/CartContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/context/CartContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/context/WishlistContext.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/context/WishlistContext.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pnpm-lock.yaml" beforeDir="false" />
+    <list default="true" id="1c94eb29-f435-4d33-a61d-3dffed252f81" name="Changes" comment="i have made all the significant changes and will continue later today">
+      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,14 +33,14 @@
   }
 }]]></component>
   <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 8
+  &quot;associatedIndex&quot;: 1
 }</component>
-  <component name="ProjectId" id="367vHGuhlMesd6JWfFcB0jIktF6" />
+  <component name="ProjectId" id="36tqMM7akmKCiEtdoFIFgax0shT" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
+<<<<<<< HEAD
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
@@ -57,16 +52,54 @@
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;
+=======
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_MARK_IGNORED_FILES_AS_EXCLUDED": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "8a2321a1",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/work/betza"
+>>>>>>> test-fix
   }
-}</component>
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\work\test-fix" />
+      <recent name="C:\work\test-fix\app\(tabs)" />
+    </key>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="7ede9ba4-ab28-4e41-96cb-9a6a0790bf7f" name="Changes" comment="" />
-      <created>1764370337383</created>
+      <changelist id="1c94eb29-f435-4d33-a61d-3dffed252f81" name="Changes" comment="" />
+      <created>1765836166805</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1764370337383</updated>
+      <updated>1765836166805</updated>
     </task>
+    <task id="LOCAL-00001" summary="i have made all the significant changes and will continue later today">
+      <option name="closed" value="true" />
+      <created>1765854249234</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1765854249235</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
+<<<<<<< HEAD
+=======
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="i have made all the significant changes and will continue later today" />
+    <option name="LAST_COMMIT_MESSAGE" value="i have made all the significant changes and will continue later today" />
+  </component>
+>>>>>>> test-fix
 </project>

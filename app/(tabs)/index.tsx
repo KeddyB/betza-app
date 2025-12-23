@@ -1,12 +1,74 @@
+<<<<<<< HEAD
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Pressable } from 'react-native';
+=======
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Pressable, Dimensions, RefreshControl } from 'react-native';
+>>>>>>> test-fix
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { useEffect, useState, useCallback } from 'react';
 import { Product, Category } from '@/lib/types';
 import ProductCard from '@/components/ProductCard';
 import { useTheme } from '@/hooks/use-color-scheme';
 import { Colors } from '@/constants/theme';
+
+// Skeleton Loader Components
+const { width } = Dimensions.get('window');
+const productWidth = (width - 48) / 2;
+
+const CategorySkeleton = () => {
+    const { colorScheme } = useTheme();
+    const themeColors = Colors[colorScheme ?? 'light'];
+    return (
+        <View style={styles.categoryItem}>
+            <View style={[styles.categoryIconCircle, { backgroundColor: themeColors.card }]} />
+            <View style={[styles.skeletonText, { width: 50, height: 10, backgroundColor: themeColors.card }]} />
+        </View>
+    );
+};
+
+const ProductCardSkeleton = () => {
+    const { colorScheme } = useTheme();
+    const themeColors = Colors[colorScheme ?? 'light'];
+    return (
+        <View style={[styles.skeletonProductCard, { backgroundColor: themeColors.card, width: productWidth }]}>
+            <View style={[styles.skeletonImage, { backgroundColor: themeColors.background }]} />
+            <View style={[styles.skeletonText, { height: 12, width: '80%', backgroundColor: themeColors.background }]} />
+            <View style={[styles.skeletonText, { height: 10, width: '50%', backgroundColor: themeColors.background }]} />
+            <View style={[styles.skeletonButton, { backgroundColor: themeColors.background }]} />
+        </View>
+    );
+};
+
+const HomePageSkeleton = () => {
+    const { colorScheme } = useTheme();
+    const themeColors = Colors[colorScheme ?? 'light'];
+    return (
+        <View style={styles.container}>
+            {/* Banner Skeleton */}
+            <View style={[styles.bannerContainer, { backgroundColor: themeColors.card }]} />
+
+            {/* Categories Skeleton */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+                {[...Array(5)].map((_, i) => <CategorySkeleton key={i} />)}
+            </ScrollView>
+
+            {/* Product Section Skeleton */}
+            <View style={styles.sectionContainer}>
+                <View style={[styles.skeletonText, { height: 20, width: 120, marginBottom: 16, backgroundColor: themeColors.card }]} />
+                <View style={styles.productsGrid}>
+                    {[...Array(2)].map((_, i) => <ProductCardSkeleton key={i} />)}
+                </View>
+            </View>
+            <View style={styles.sectionContainer}>
+                <View style={[styles.skeletonText, { height: 20, width: 150, marginBottom: 16, backgroundColor: themeColors.card }]} />
+                <View style={styles.productsGrid}>
+                    {[...Array(2)].map((_, i) => <ProductCardSkeleton key={i} />)}
+                </View>
+            </View>
+        </View>
+    );
+};
+
 
 interface GroupedProducts {
   [key: string]: Product[];
@@ -18,50 +80,64 @@ export default function HomePage() {
   const [groupedProducts, setGroupedProducts] = useState<GroupedProducts>({});
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchHomeData = useCallback(async () => {
+    try {
+      const [categoriesRes, productsRes] = await Promise.all([
+          supabase.from('categories').select('*'),
+          supabase.from('products').select('*')
+      ]);
+
+      const { data: categoriesData, error: categoriesError } = categoriesRes;
+      const { data: productsData, error: productsError } = productsRes;
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError.message);
+      }
+      setCategories(categoriesData || []);
+
+      if (productsError) {
+        console.error('Error fetching products:', productsError.message);
+      }
+
+      const grouped = (productsData || []).reduce((acc: GroupedProducts, product: Product) => {
+        const categoryName = categoriesData?.find(cat => cat.id === product.category_id)?.name || 'Uncategorized';
+        if (!acc[categoryName]) {
+          acc[categoryName] = [];
+        }
+        acc[categoryName].push(product);
+        return acc;
+      }, {});
+      setGroupedProducts(grouped);
+
+    } catch(error) {
+      console.error('Failed to fetch home data:', error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoading(true);
-        // Fetch categories first
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('categories')
-          .select('*');
+    setLoading(true);
+    fetchHomeData().finally(() => setLoading(false));
+  }, [fetchHomeData]);
 
-        if (categoriesError) {
-          console.error('Error fetching categories:', JSON.stringify(categoriesError, null, 2));
-        }
-        setCategories(categoriesData || []);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchHomeData();
+    setRefreshing(false);
+  }, [fetchHomeData]);
 
-        // Fetch products and group them
-        const { data: productsData, error: productsError } = await supabase
-          .from('products')
-          .select('*');
-
-        if (productsError) {
-          console.error('Error fetching products:', JSON.stringify(productsError, null, 2));
-        }
-
-        const grouped = (productsData || []).reduce((acc: GroupedProducts, product: Product) => {
-          const categoryName = categoriesData?.find(cat => cat.id === product.category_id)?.name || 'Uncategorized';
-          if (!acc[categoryName]) {
-            acc[categoryName] = [];
-          }
-          acc[categoryName].push(product);
-          return acc;
-        }, {});
-        setGroupedProducts(grouped);
-
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHomeData();
-  }, []);
+  if (loading) {
+      return (
+          <View style={[styles.mainContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+              <HomePageSkeleton />
+          </View>
+      );
+  }
 
   return (
     <View style={[styles.mainContainer, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
+<<<<<<< HEAD
       {/* Custom Header */}
       <View style={[styles.header, { backgroundColor: Colors[colorScheme ?? 'light'].background }]}>
         <View style={styles.locationContainer}>
@@ -77,6 +153,19 @@ export default function HomePage() {
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+=======
+        <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor={Colors[colorScheme ?? 'light'].primary}
+                />
+            }
+        >
+>>>>>>> test-fix
         {/* Promotional Banner */}
         <View style={styles.bannerContainer}>
             <View style={styles.bannerContent}>
@@ -95,50 +184,40 @@ export default function HomePage() {
 
         {/* Circular Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
-          {loading ? (
-             <ActivityIndicator size="small" color={Colors[colorScheme ?? 'light'].tint} />
-          ) : (
-             categories.map((category) => (
-                <TouchableOpacity key={category.id} style={styles.categoryItem} onPress={() => router.push(`/category/${category.name}`)}>
-                   <View style={styles.categoryIconCircle}>
-                      <Image
-                        source={{ uri: category.icon || 'https://cdn-icons-png.flaticon.com/512/3082/3082025.png' }} // Fallback or use real icons if available
-                        style={styles.categoryImage}
-                      />
-                   </View>
-                   <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>{category.name}</Text>
-                </TouchableOpacity>
-             ))
-          )}
+          {categories.map((category) => (
+            <TouchableOpacity key={category.id} style={styles.categoryItem} onPress={() => router.push(`/category/${category.name}`)}>
+                <View style={styles.categoryIconCircle}>
+                    <Image
+                    source={{ uri: category.icon || 'https://cdn-icons-png.flaticon.com/512/3082/3082025.png' }}
+                    style={styles.categoryImage}
+                    />
+                </View>
+                <Text style={[styles.categoryName, { color: Colors[colorScheme ?? 'light'].text }]}>{category.name}</Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
 
         {/* Product Sections */}
-        {loading ? (
-           <View style={{ padding: 16 }}>
-             <ActivityIndicator size="large" color={Colors[colorScheme ?? 'light'].tint} />
-           </View>
-        ) : (
-           Object.keys(groupedProducts).map((categoryName) => (
-             <View key={categoryName} style={styles.sectionContainer}>
-               <View style={styles.sectionHeader}>
-                 <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>{categoryName}</Text>
-                 <TouchableOpacity onPress={() => router.push(`/category/${categoryName}`)}>
-                   <Text style={{ color: Colors[colorScheme ?? 'light'].primary, fontWeight: '600' }}>See all</Text>
-                 </TouchableOpacity>
-               </View>
+        {Object.keys(groupedProducts).map((categoryName) => (
+            <View key={categoryName} style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: Colors[colorScheme ?? 'light'].text }]}>{categoryName}</Text>
+                <TouchableOpacity onPress={() => router.push(`/category/${categoryName}`)}>
+                <Text style={{ color: Colors[colorScheme ?? 'light'].primary, fontWeight: '600' }}>See all</Text>
+                </TouchableOpacity>
+            </View>
 
-               <View style={styles.productsGrid}>
-                 {groupedProducts[categoryName].slice(0, 4).map((product) => (
-                   <ProductCard
-                     key={product.id}
-                     product={product}
-                     onPress={() => router.push(`/product/${product.id}`)}
-                   />
-                 ))}
-               </View>
-             </View>
-           ))
-        )}
+            <View style={styles.productsGrid}>
+                {groupedProducts[categoryName].slice(0, 4).map((product) => (
+                <ProductCard
+                    key={product.id}
+                    product={product}
+                    onPress={() => router.push(`/product/${product.id}`)}
+                />
+                ))}
+            </View>
+            </View>
+        ))}
          <View style={{ height: 100 }} />
       </ScrollView>
     </View>
@@ -175,7 +254,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerContainer: {
-    backgroundColor: '#D1FAE5', // Light green background
+    backgroundColor: '#D1FAE5',
     margin: 16,
     borderRadius: 16,
     height: 160,
@@ -192,17 +271,17 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#064E3B', // Dark green
+    color: '#064E3B',
     marginBottom: 4,
   },
   bannerSubtitle: {
     fontSize: 14,
-    color: '#10B981', // Green
+    color: '#10B981',
     fontWeight: '600',
     marginBottom: 16,
   },
   shopNowButton: {
-    backgroundColor: '#10B981', // Green button
+    backgroundColor: '#10B981',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -233,7 +312,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#F3F4F6', // Light gray
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -266,4 +345,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
+  // Skeleton Styles
+  skeletonText: {
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonProductCard: {
+      marginBottom: 16,
+      borderRadius: 12,
+      padding: 10,
+  },
+  skeletonImage: {
+      height: 120,
+      borderRadius: 8,
+      marginBottom: 10,
+  },
+  skeletonButton: {
+      height: 40,
+      borderRadius: 8,
+      marginTop: 10,
+  }
 });
