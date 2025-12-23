@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "test-fix",
-    "slug": "test-fix",
+    "name": "betza-app",
+    "slug": "betza-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +19,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.keddyb.betzaapp"
     },
     "web": {
       "output": "static",
@@ -43,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a435511f-c5e0-4946-8ed0-098699a5ac19"
+      }
     }
   }
 }
